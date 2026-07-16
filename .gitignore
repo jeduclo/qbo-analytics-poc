@@ -1,0 +1,18 @@
+# Environment variables — never commit these
+.env
+
+# Python virtual environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# ML model binary files — too large for Git
+models/*.pkl
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Power BI working files
+*.pbix.lock
