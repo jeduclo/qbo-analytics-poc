@@ -1,0 +1,410 @@
+{
+  "QueryResponse": {
+    "Payment": [
+      {
+        "CustomerRef": {
+          "value": "8",
+          "name": "0969 Ocean View Road"
+        },
+        "DepositToAccountRef": {
+          "value": "4"
+        },
+        "TotalAmt": 387.0,
+        "UnappliedAmt": 0,
+        "ProcessPayment": false,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "128",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-05-29T13:13:33-07:00",
+          "LastUpdatedTime": "2026-05-29T13:13:33-07:00"
+        },
+        "TxnDate": "2026-05-29",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "Line": [
+          {
+            "Amount": 387.0,
+            "LinkedTxn": [
+              {
+                "TxnId": "96",
+                "TxnType": "Invoice"
+              }
+            ],
+            "LineEx": {
+              "any": [
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnId",
+                    "Value": "96"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnOpenBalance",
+                    "Value": "387.00"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnReferenceNumber",
+                    "Value": "1031"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "CustomerRef": {
+          "value": "3",
+          "name": "Cool Cars"
+        },
+        "DepositToAccountRef": {
+          "value": "4"
+        },
+        "TotalAmt": 1675.52,
+        "UnappliedAmt": 0,
+        "ProcessPayment": false,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "120",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-05-29T12:59:21-07:00",
+          "LastUpdatedTime": "2026-05-29T12:59:21-07:00"
+        },
+        "TxnDate": "2026-05-29",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "Line": [
+          {
+            "Amount": 1675.52,
+            "LinkedTxn": [
+              {
+                "TxnId": "12",
+                "TxnType": "Invoice"
+              }
+            ],
+            "LineEx": {
+              "any": [
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnId",
+                    "Value": "12"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnOpenBalance",
+                    "Value": "1675.52"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnReferenceNumber",
+                    "Value": "1004"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "CustomerRef": {
+          "value": "25",
+          "name": "Sushi by Katsuyuki"
+        },
+        "DepositToAccountRef": {
+          "value": "4"
+        },
+        "TotalAmt": 80.0,
+        "UnappliedAmt": 0,
+        "ProcessPayment": false,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "116",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-05-29T12:52:44-07:00",
+          "LastUpdatedTime": "2026-05-29T12:52:44-07:00"
+        },
+        "TxnDate": "2026-05-25",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "LinkedTxn": [
+          {
+            "TxnId": "121",
+            "TxnType": "Deposit"
+          }
+        ],
+        "Line": [
+          {
+            "Amount": 80.0,
+            "LinkedTxn": [
+              {
+                "TxnId": "63",
+                "TxnType": "Invoice"
+              }
+            ],
+            "LineEx": {
+              "any": [
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnId",
+                    "Value": "63"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnOpenBalance",
+                    "Value": "80.00"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnReferenceNumber",
+                    "Value": "1017"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "CustomerRef": {
+          "value": "1",
+          "name": "Amy's Bird Sanctuary"
+        },
+        "DepositToAccountRef": {
+          "value": "4"
+        },
+        "PaymentMethodRef": {
+          "value": "2"
+        },
+        "TotalAmt": 220.0,
+        "UnappliedAmt": 0,
+        "ProcessPayment": false,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "101",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-05-28T13:39:32-07:00",
+          "LastUpdatedTime": "2026-05-28T13:39:32-07:00"
+        },
+        "TxnDate": "2026-05-28",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "LinkedTxn": [
+          {
+            "TxnId": "121",
+            "TxnType": "Deposit"
+          }
+        ],
+        "Line": [
+          {
+            "Amount": 220.0,
+            "LinkedTxn": [
+              {
+                "TxnId": "67",
+                "TxnType": "Invoice"
+              }
+            ],
+            "LineEx": {
+              "any": [
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnId",
+                    "Value": "67"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnOpenBalance",
+                    "Value": "459.00"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnReferenceNumber",
+                    "Value": "1021"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "CustomerRef": {
+          "value": "26",
+          "name": "Travis Waldron"
+        },
+        "DepositToAccountRef": {
+          "value": "4"
+        },
+        "TotalAmt": 81.0,
+        "UnappliedAmt": 0,
+        "ProcessPayment": false,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "98",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-05-28T13:35:42-07:00",
+          "LastUpdatedTime": "2026-05-28T13:35:42-07:00"
+        },
+        "TxnDate": "2026-05-28",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "LinkedTxn": [
+          {
+            "TxnId": "121",
+            "TxnType": "Deposit"
+          }
+        ],
+        "Line": [
+          {
+            "Amount": 81.0,
+            "LinkedTxn": [
+              {
+                "TxnId": "42",
+                "TxnType": "Invoice"
+              }
+            ],
+            "LineEx": {
+              "any": [
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnId",
+                    "Value": "42"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnOpenBalance",
+                    "Value": "81.00"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                },
+                {
+                  "name": "{http://schema.intuit.com/finance/v3}NameValue",
+                  "declaredType": "com.intuit.schema.finance.v3.NameValue",
+                  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+                  "value": {
+                    "Name": "txnReferenceNumber",
+                    "Value": "1013"
+                  },
+                  "nil": false,
+                  "globalScope": true,
+                  "typeSubstituted": false
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 5
+  },
+  "time": "2026-07-20T09:39:07.948-07:00"
+}
