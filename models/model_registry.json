@@ -1,0 +1,27 @@
+{
+  "overdue_classifier": {
+    "auc_roc": 0.733279613215149,
+    "accuracy": 0.8111111111111111,
+    "training_rows": 356,
+    "features": [
+      "amount",
+      "payment_terms_days",
+      "customer_avg_days_to_pay",
+      "customer_historical_overdue_rate",
+      "customer_invoice_count",
+      "invoice_month",
+      "invoice_quarter",
+      "bank_rate",
+      "cpi",
+      "sector_index",
+      "customer_current_balance",
+      "days_since_last_payment"
+    ],
+    "updated_at": "2026-07-20T14:15:38.084042"
+  },
+  "revenue_forecaster": {
+    "prophet_months_trained": 24,
+    "macro_adjustment": true,
+    "updated_at": "2026-07-20T14:16:04.988695"
+  }
+}
