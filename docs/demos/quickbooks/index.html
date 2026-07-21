@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickBooks Online Financial Intelligence Platform — Live Demo</title>
+  <meta name="description"
+        content="Live financial decision intelligence platform built on QuickBooks 
+                 Online data. AR risk predictions, revenue forecasting, and 
+                 automated P&L — updating every morning.">
+  <link rel="stylesheet" href="../../css/demos.css">
+  <link rel="canonical" href="https://jeduclo.github.io/qbo-analytics-poc/demos/quickbooks/">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container nav__inner">
+      <a href="https://jeduclo.github.io/qbo-analytics-poc" class="nav__logo">
+        LedgerLens<span>Analytics</span>
+      </a>
+      <ul class="nav__links">
+        <li><a href="https://jeduclo.github.io/qbo-analytics-poc">Home</a></li>
+        <li><a href="https://jeduclo.github.io/qbo-analytics-poc/demos/">Demos</a></li>
+        <li><a href="https://jeduclo.github.io/qbo-analytics-poc/demos/quickbooks/" class="active">QuickBooks</a></li>
+        <li><a href="https://calendly.com/jeanalegue/30min">Book a Call</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <span class="hero__eyebrow">Live Demo — QuickBooks Online</span>
+      <h1 class="hero__title">
+        Your QuickBooks Data,<br>Telling You What Happens Next
+      </h1>
+      <p class="hero__subtitle">
+        Most QuickBooks reports answer one question: what happened last month?
+        This platform answers a different one — which invoices are about to go 
+        overdue, what your revenue will look like in three months, and exactly 
+        which customers your team should call today.
+      </p>
+      <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+        <a href="#dashboard" class="btn btn--primary btn--large">
+          Explore the Dashboard ↓
+        </a>
+        <a href="https://calendly.com/jeanalegue/30min" class="btn btn--ghost btn--large">
+          Book a Discovery Call
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Embed -->
+  <section class="dashboard-section" id="dashboard">
+    <div class="container">
+
+      <!-- Loading placeholder — hidden once iframe loads -->
+      <div class="dashboard-placeholder"
+           style="height:620px; background:#F4F6F8; border-radius:12px;
+                  display:flex; align-items:center; justify-content:center;
+                  border:1px solid #E5E7EB; color:#6B7280; font-size:0.9rem;">
+        Loading dashboard&hellip;
+      </div>
+
+      <div class="dashboard-container">
+        <iframe
+            src="https://app.fabric.microsoft.com/view?r=eyJrIjoiM2JmYmFlYTAtZjY4MC00NjJhLWI3MGItODUwZTBlZTBlZWIyIiwidCI6IjIwYzJiNjRmLWQ2MDItNGIwYi1iZTdiLTM2MDYxYWQ4ZTA3MCJ9"
+            width="100%"
+            height="620"
+            frameborder="0"
+            allowfullscreen="true"
+            title="QuickBooks Online Financial Intelligence Dashboard">
+        </iframe>
+       </div>
+
+      <p style="text-align:center; margin-top:1rem; font-size:0.8125rem;
+                color:#9CA3AF;">
+        Dashboard refreshes automatically every morning at 7:00 AM UTC.
+        Data is synthetic — safe for public viewing.
+        <a href="#footnote" style="color:#6B7280;">Technical details ↓</a>
+      </p>
+
+    </div>
+  </section>
+
+  <!-- Strategic Insight Section -->
+  <section class="section" style="background:white;">
+    <div class="container">
+      <h2 class="section-title">What This Dashboard Actually Does</h2>
+      <p class="section-subtitle">
+        Three capabilities that QuickBooks Online cannot provide on its own.
+      </p>
+
+      <div class="insight-grid" style="margin-top:2rem;">
+
+        <div class="insight-card fade-in">
+          <div class="insight-card__icon">🎯</div>
+          <h3 class="insight-card__title">Collections Priority — Before Invoices Go Overdue</h3>
+          <p class="insight-card__body">
+            The Collections Priority table on the first dashboard page ranks every
+            open invoice by its probability of going overdue — before it does. Each
+            row tells you the customer, the balance, the probability score, and why
+            that invoice is flagged: "Customer historically pays late," "Rising
+            interest rate environment," or "No recent payment activity." The final
+            column shows the daily financing cost of each day of delay at the current
+            Bank of Canada rate. Your team opens this list every morning and knows
+            exactly who to call and in what order — without a spreadsheet, without a
+            manual aging review, without waiting for end-of-month reports.
+          </p>
+        </div>
+
+        <div class="insight-card fade-in">
+          <div class="insight-card__icon">📈</div>
+          <h3 class="insight-card__title">Three-Scenario Revenue Forecast</h3>
+          <p class="insight-card__body">
+            The Scenario Forecast page shows where revenue is headed over the next
+            twelve months under three macro conditions: Base (current Bank of Canada
+            rate unchanged), Stress (rate rises 75 basis points, inflation elevated),
+            and Upside (rate cut begins, sector conditions improve). The forecast
+            combines a time-series model trained on your payment history with a
+            machine learning layer that incorporates live macro indicator data. The
+            question it answers is not "what happened last quarter" — it is "which
+            scenario am I planning my hiring and cash flow against right now." Switch
+            between scenarios with a single click.
+          </p>
+        </div>
+
+        <div class="insight-card fade-in">
+          <div class="insight-card__icon">📋</div>
+          <h3 class="insight-card__title">Financial Statements From Your Chart of Accounts</h3>
+          <p class="insight-card__body">
+            The Financial Statements page generates a structured P&amp;L and Balance
+            Sheet directly from your QuickBooks Chart of Accounts — no manual export,
+            no pivot table, no waiting for your accountant to run the report. Every
+            account is mapped to its financial statement line, sign convention, and
+            working capital classification. Current month versus prior year variance
+            columns update automatically with conditional formatting: green when
+            margins improve, red when they compress. Four financial ratios — Current
+            Ratio, DSO, Gross Margin, and Collection Efficiency — sit above the
+            statements as real-time reference points against industry benchmarks.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">
+        Three layers, running unattended every morning.
+      </p>
+
+      <div class="steps fade-in">
+
+        <div class="step">
+          <div class="step__number">1</div>
+          <h3 class="step__title">Data</h3>
+          <p class="step__body">
+            A Python script connects to the QuickBooks Online API each morning,
+            extracts your customers, invoices, and payment history, and loads
+            everything into an Azure SQL database. Bank of Canada rate and CPI
+            data update alongside your financial records automatically.
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step__number">2</div>
+          <h3 class="step__title">Intelligence</h3>
+          <p class="step__body">
+            Three machine learning models run against the updated data: an XGBoost
+            classifier scores every open invoice for overdue risk; a Prophet model
+            extended with a macro adjustment layer generates the twelve-month
+            revenue forecast; an Isolation Forest flags statistical anomalies in
+            recent transactions. Models retrain weekly on newly resolved invoices.
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step__number">3</div>
+          <h3 class="step__title">Delivery</h3>
+          <p class="step__body">
+            Power BI refreshes from the updated database at 7:00 AM UTC. The
+            dashboard — with its collections priority list, scenario forecast, and
+            financial statements — reflects last night's data by the time your team
+            starts their day. No manual steps, no exports, no waiting.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-section__title">Want This on Your QuickBooks Data?</h2>
+      <p class="cta-section__subtitle">
+        We connect to your QuickBooks Online account, map your chart of accounts,
+        and deliver a customised version of this platform in two to four weeks —
+        including machine learning models trained on your historical payment patterns,
+        not synthetic data.
+      </p>
+      <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+        <a href="https://calendly.com/jeanalegue/30min" class="btn btn--ghost btn--large">
+          Book a 30-Minute Discovery Call →
+        </a>
+      </div>
+      <p style="margin-top:1.5rem; font-size:0.875rem; color:rgba(255,255,255,0.65);">
+        No commitment. No sales deck. We look at your QuickBooks data together 
+        and tell you exactly what we would build.
+      </p>
+    </div>
+  </section>
+
+  <!-- Technical Footnote -->
+  <section class="section--tight" id="footnote">
+    <div class="container">
+      <div class="footnote">
+        <p>
+          <strong>Technical details:</strong> This dashboard is built on 24 months
+          of synthetic financial data generated with Python and engineered to
+          replicate realistic SMB payment patterns, macro-correlated revenue cycles,
+          and AR aging distributions. It does not represent real financial records.
+          The platform is designed to connect to a live QuickBooks Online account
+          via OAuth 2.0 for production deployments.
+        </p>
+        <div class="tech-stack">
+          <span class="tech-badge">Python 3.11</span>
+          <span class="tech-badge">QuickBooks Online API</span>
+          <span class="tech-badge">Azure SQL</span>
+          <span class="tech-badge">XGBoost</span>
+          <span class="tech-badge">Prophet</span>
+          <span class="tech-badge">SHAP</span>
+          <span class="tech-badge">Power BI</span>
+          <span class="tech-badge">GitHub Actions</span>
+          <span class="tech-badge">Statistics Canada API</span>
+          <span class="tech-badge">Bank of Canada API</span>
+        </div>
+        <p style="margin-top:1rem;">
+          Automated daily refresh via GitHub Actions at 05:00 UTC.
+          Power BI dataset refresh at 07:00 UTC.
+          ML models retrain weekly on Sundays at 04:00 UTC.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>
+        <a href="https://jeduclo.github.io/qbo-analytics-poc/demos/"
+           style="color:var(--colour-text-secondary); text-decoration:none;">
+          ← Back to all demos
+        </a>
+      </p>
+      <p style="margin-top:8px;">
+        &copy; 2025 ledgerlens. All demos use synthetic data.
+      </p>
+    </div>
+  </footer>
+
+  <script src="../../js/demos.js"></script>
+</body>
+</html>

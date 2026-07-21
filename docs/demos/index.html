@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Intelligence Demos — Live ERP Analytics Platform</title>
+  <meta name="description"
+        content="Live demos of our financial decision intelligence platform 
+                 built on QuickBooks Online, Odoo, and Dynamics 365 data.">
+  <link rel="stylesheet" href="../css/demos.css">
+  <link rel="canonical" href="https://jeduclo.github.io/qbo-analytics-poc">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container nav__inner">
+      <a href="https://jeduclo.github.io/qbo-analytics-poc" class="nav__logo">
+        LedgerLens<span>Analytics</span>
+      </a>
+      <ul class="nav__links">
+        <li><a href="https://jeduclo.github.io/qbo-analytics-poc">Home</a></li>
+        <li><a href="https://jeduclo.github.io/qbo-analytics-poc/demos/" class="active">Demos</a></li>
+        <li><a href="https://calendly.com/jeanalegue/30min">Book a Call</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <span class="hero__eyebrow">Live Platform Demos</span>
+      <h1 class="hero__title">
+        Financial Decision Intelligence,<br>Built on Your ERP Data
+      </h1>
+      <p class="hero__subtitle">
+        Each demo below is a live, automatically refreshing platform built 
+        on synthetic ERP data — the same architecture we deploy for clients. 
+        Click any active demo to explore it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ERP Demo Cards -->
+  <section class="section">
+    <div class="container">
+      <div class="erp-grid">
+
+        <!-- QuickBooks Online — LIVE -->
+        <div class="erp-card fade-in">
+          <div class="erp-card__header">
+            <div class="erp-card__logo">📊</div>
+            <div>
+              <div class="erp-card__name">
+                QuickBooks Online
+                <span class="badge badge--live" style="margin-left:8px;">Live</span>
+              </div>
+              <div class="erp-card__category">Accounting · SMB · REST API</div>
+            </div>
+          </div>
+          <div class="erp-card__body">
+            <p class="erp-card__description">
+              A complete financial intelligence platform built on QuickBooks Online
+              data — AR predictions, revenue forecasting, and anomaly detection,
+              updating automatically every morning.
+            </p>
+            <ul class="erp-card__features">
+              <li>XGBoost invoice overdue prediction with SHAP explanations</li>
+              <li>12-month revenue forecast — Base, Stress, and Upside scenarios</li>
+              <li>AR aging analysis with collections priority ranking</li>
+              <li>P&amp;L and Balance Sheet from Chart of Accounts mapping</li>
+              <li>Daily automated refresh via GitHub Actions</li>
+            </ul>
+            <a href="https://jeduclo.github.io/qbo-analytics-poc/demos/quickbooks/"
+               class="btn btn--primary" style="width:100%; justify-content:center;">
+              View Live Demo →
+            </a>
+          </div>
+        </div>
+
+        <!-- Odoo — Coming Soon -->
+        <div class="erp-card fade-in" style="opacity:0.7; pointer-events:none;">
+          <div class="erp-card__header">
+            <div class="erp-card__logo">🔧</div>
+            <div>
+              <div class="erp-card__name">
+                Odoo
+                <span class="badge badge--soon" style="margin-left:8px;">Coming Soon</span>
+              </div>
+              <div class="erp-card__category">ERP · Open Source · XML-RPC API</div>
+            </div>
+          </div>
+          <div class="erp-card__body">
+            <p class="erp-card__description">
+              The same financial intelligence platform, connected to Odoo —
+              the open-source ERP used by over 7 million businesses worldwide.
+            </p>
+            <ul class="erp-card__features">
+              <li class="coming-soon">Invoice and payment extraction via XML-RPC</li>
+              <li class="coming-soon">Odoo Chart of Accounts mapping</li>
+              <li class="coming-soon">Reused ML pipeline and Power BI template</li>
+              <li class="coming-soon">Estimated delivery: Q2 2025</li>
+            </ul>
+            <div class="btn btn--primary"
+                 style="width:100%; justify-content:center;
+                        opacity:0.5; cursor:not-allowed; pointer-events:none;">
+              Coming Soon
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamics 365 — Coming Soon -->
+        <div class="erp-card fade-in" style="opacity:0.7; pointer-events:none;">
+          <div class="erp-card__header">
+            <div class="erp-card__logo">⚙️</div>
+            <div>
+              <div class="erp-card__name">
+                Dynamics 365
+                <span class="badge badge--soon" style="margin-left:8px;">Coming Soon</span>
+              </div>
+              <div class="erp-card__category">ERP · Enterprise · OData API</div>
+            </div>
+          </div>
+          <div class="erp-card__body">
+            <p class="erp-card__description">
+              Financial intelligence for Microsoft Dynamics 365 Business Central
+              and Finance — the ERP platform for mid-market and enterprise clients.
+            </p>
+            <ul class="erp-card__features">
+              <li class="coming-soon">Business Central OData API integration</li>
+              <li class="coming-soon">Dynamics Chart of Accounts mapping</li>
+              <li class="coming-soon">Enterprise-scale ML pipeline</li>
+              <li class="coming-soon">Estimated delivery: Q3 2025</li>
+            </ul>
+            <div class="btn btn--primary"
+                 style="width:100%; justify-content:center;
+                        opacity:0.5; cursor:not-allowed; pointer-events:none;">
+              Coming Soon
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-section__title">Ready to See This on Your Data?</h2>
+      <p class="cta-section__subtitle">
+        We connect to your ERP, map your chart of accounts, and deliver a 
+        customised version of this platform in two to four weeks.
+      </p>
+      <a href="https://calendly.com/jeanalegue/30min" class="btn btn--ghost btn--large">
+        Book a 30-Minute Discovery Call →
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>All demos use synthetic data and do not represent real financial records.</p>
+      <p style="margin-top:8px;">
+        &copy; 2025 ledgerlens. Built with Python · Azure SQL · 
+        XGBoost · Power BI.
+      </p>
+    </div>
+  </footer>
+
+  <script src="../js/demos.js"></script>
+</body>
+</html>
