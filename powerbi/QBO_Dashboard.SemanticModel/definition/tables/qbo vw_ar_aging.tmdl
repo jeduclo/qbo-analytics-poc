@@ -1,0 +1,116 @@
+table 'qbo vw_ar_aging'
+	lineageTag: 42c10554-3c07-454c-b4bf-2042f72d4f24
+
+	/// The unique reference number of the invoice this aging record relates to, matching the same invoice in the invoice detail table.
+	column invoice_id
+		dataType: string
+		lineageTag: 9acb10eb-a105-4990-b2eb-04b9c68a8af2
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A unique code identifying the customer who owes this invoice balance.
+	column customer_id
+		dataType: string
+		lineageTag: 53756ea7-591d-4c13-bab6-24ff68d54c4a
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The name of the customer who owes this invoice balance.
+	column customer_name
+		dataType: string
+		lineageTag: d919f082-04b0-48bc-bd43-be32158af0c2
+		summarizeBy: none
+		sourceColumn: customer_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The country associated with the customer, typically based on their billing address on file.
+	column country
+		dataType: string
+		lineageTag: 856941e3-b886-478e-954a-56de69f7f4a4
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The date this invoice was originally issued to the customer.
+	column invoice_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: db7c4c7c-9bff-411b-862c-f5e16213daeb
+		summarizeBy: none
+		sourceColumn: invoice_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The date by which this invoice's balance was due to be paid.
+	column due_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 3ceb1c48-5f5b-4674-86ab-6dd0c099d9d7
+		summarizeBy: none
+		sourceColumn: due_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The total dollar value originally billed on this invoice.
+	column amount
+		dataType: double
+		lineageTag: 2bfcb652-2381-4202-b5b5-d503a7f4e61d
+		summarizeBy: sum
+		sourceColumn: amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The dollar amount of this invoice that remains unpaid as of this aging snapshot.
+	column balance
+		dataType: double
+		formatString: $ #,##0
+		lineageTag: 49712ef9-e098-4107-a28d-f80c987623f9
+		summarizeBy: sum
+		sourceColumn: balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The number of days that have passed since the invoice's due date, used to determine how overdue the balance is.
+	column days_past_due
+		dataType: int64
+		formatString: 0
+		lineageTag: 3dd0f775-0c4d-4dfc-8a56-1defcf994915
+		summarizeBy: sum
+		sourceColumn: days_past_due
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The aging category, such as "31-60 days," that this invoice's outstanding balance falls into, used to assess collections risk by age of debt.
+	column aging_bucket
+		dataType: string
+		lineageTag: 568d9b19-c8e7-4971-9f4b-f3794561ec9a
+		summarizeBy: none
+		sourceColumn: aging_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo vw_ar_aging' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "vw_ar_aging"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

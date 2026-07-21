@@ -1,0 +1,162 @@
+table Date
+	lineageTag: 87c82d16-a286-46eb-83e8-ee7201d19f7c
+	dataCategory: Time
+
+	/// A single calendar date; this is the core column that links the Date table to invoice, payment, and revenue dates throughout the model.
+	column Date
+		isUnique
+		lineageTag: d057eb06-e22c-4827-be88-844f78b82b8f
+		isNameInferred
+		sourceColumn: [Date]
+
+	/// The four-digit calendar year the date falls in, such as 2024.
+	column Year
+		lineageTag: 5c2946dd-510a-4d6f-8e69-bd0b855cfbbb
+		isNameInferred
+		sourceColumn: [Year]
+
+	/// The calendar quarter the date falls in, numbered 1 through 4.
+	column Quarter
+		lineageTag: 4a7a59bb-618f-44c4-b40d-c2116f58ace8
+		isNameInferred
+		sourceColumn: [Quarter]
+
+	/// A readable label combining the quarter and year, such as "Q1 2024," for use in report titles and filters.
+	column QuarterLabel
+		lineageTag: 89ab328a-d8c8-49c4-905c-f13b5d095061
+		isNameInferred
+		sourceColumn: [QuarterLabel]
+
+	/// The calendar month the date falls in, numbered 1 (January) through 12 (December).
+	column MonthNumber
+		lineageTag: 73f2efe7-ff91-451d-b58b-da0958506f9d
+		isNameInferred
+		sourceColumn: [MonthNumber]
+
+	/// The full name of the calendar month the date falls in, such as "January."
+	column MonthName
+		lineageTag: d21da630-6ded-4b5b-b4fa-77ed7961be96
+		isNameInferred
+		sourceColumn: [MonthName]
+
+	/// The three-letter abbreviation of the calendar month, such as "Jan," used to keep charts and tables compact.
+	column MonthShort
+		lineageTag: 7d46452a-3028-47e4-a953-2f1025a186c6
+		isNameInferred
+		sourceColumn: [MonthShort]
+
+	/// A readable label combining the abbreviated month and year, such as "Jan 2024," commonly used on trend charts.
+	column MonthYear
+		lineageTag: 5f1594b0-8b99-44ad-a83a-fa225cebd5ed
+		isNameInferred
+		sourceColumn: [MonthYear]
+		sortByColumn: YearMonthSort
+
+	/// The standard (ISO) week number the date falls in, counted from the first week of the year.
+	column WeekNumber
+		lineageTag: 7ad9c9dc-1fc8-41ee-93f2-a6c1715cadd4
+		isNameInferred
+		sourceColumn: [WeekNumber]
+
+	/// The day of the week as a number, where 1 is Monday and 7 is Sunday.
+	column DayOfWeek
+		lineageTag: fa88f159-5da0-4c23-874a-19823deb84e4
+		isNameInferred
+		sourceColumn: [DayOfWeek]
+
+	/// The full name of the day of the week, such as "Monday."
+	column DayName
+		lineageTag: a5831636-cfec-4db8-a3b8-5aa213e0be24
+		isNameInferred
+		sourceColumn: [DayName]
+
+	/// A yes/no flag indicating whether the date falls on a Saturday or Sunday.
+	column IsWeekend
+		lineageTag: 6f7612a8-fa1b-42ce-a2a9-a2d9375874d0
+		isNameInferred
+		sourceColumn: [IsWeekend]
+
+	/// A yes/no flag indicating whether the date falls on a Monday through Friday business day.
+	column IsWeekday
+		lineageTag: f9ff2d0c-ec46-4fd0-8665-b71555cb6179
+		isNameInferred
+		sourceColumn: [IsWeekday]
+
+	/// A yes/no flag indicating whether the date falls within the same month and year as today, useful for highlighting the current month in reports.
+	column IsCurrentMonth
+		lineageTag: 80b202ab-abfc-431a-8eaf-5a59232ab31c
+		isNameInferred
+		sourceColumn: [IsCurrentMonth]
+
+	/// A yes/no flag indicating whether the date falls within the current calendar year.
+	column IsCurrentYear
+		lineageTag: c2ecf8fc-3659-47bf-9774-93c05b100000
+		isNameInferred
+		sourceColumn: [IsCurrentYear]
+
+	/// A yes/no flag indicating whether the date falls within the calendar month immediately before the current month.
+	column IsPriorMonth
+		lineageTag: 14e34d63-8c40-4a07-a515-eca4ba5a3cb5
+		isNameInferred
+		sourceColumn: [IsPriorMonth]
+
+	/// A yes/no flag indicating whether the date falls in the same month as today, but exactly one year earlier.
+	column IsPriorYear
+		lineageTag: 78ee2917-6cfa-4409-8392-453da5f55d39
+		isNameInferred
+		sourceColumn: [IsPriorYear]
+
+	column YearMonthSort = [Year] * 100 + [MonthNumber]
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c4c46131-942e-497f-8de4-bbe81375bfe4
+		summarizeBy: none
+
+	partition Date = calculated
+		mode: import
+		source =
+				/*
+				=====================================================================
+				Date Table
+				=====================================================================
+				Purpose:
+				This calculated table is a dedicated, contiguous date dimension spanning
+				1 January 2022 through 31 December 2027 (one row per calendar day, no gaps).
+				
+				Why it is required:
+				- Power BI's time intelligence functions (TOTALYTD, SAMEPERIODLASTYEAR,
+				  DATEADD, PARALLELPERIOD, etc.) require a proper date table: a contiguous
+				  range of dates marked as the model's official "Date Table", related to
+				  fact tables on a date-typed key.
+				- The fact tables in this model (vw_invoice_detail, vw_cash_received,
+				  vw_sales_summary) each carry their own date columns (invoice_date,
+				  payment_month, revenue_month) which may have gaps, duplicates, or
+				  inconsistent granularity and cannot reliably drive time intelligence
+				  on their own.
+				- Centralizing calendar attributes (year, quarter, month labels, ISO week,
+				  weekday/weekend flags, current/prior period flags) here means every
+				  report and measure references one consistent source of truth instead of
+				  duplicating date logic across tables.
+				=====================================================================
+				*/
+				ADDCOLUMNS(
+				    CALENDAR(DATE(2022,1,1), DATE(2027,12,31)),
+				    "Year", YEAR([Date]),
+				    "Quarter", QUARTER([Date]),
+				    "QuarterLabel", "Q" & QUARTER([Date]) & " " & YEAR([Date]),
+				    "MonthNumber", MONTH([Date]),
+				    "MonthName", FORMAT([Date], "MMMM"),
+				    "MonthShort", FORMAT([Date], "MMM"),
+				    "MonthYear", FORMAT([Date], "MMM YYYY"),
+				    "WeekNumber", WEEKNUM([Date], 21),
+				    "DayOfWeek", WEEKDAY([Date], 2),
+				    "DayName", FORMAT([Date], "dddd"),
+				    "IsWeekend", WEEKDAY([Date], 2) >= 6,
+				    "IsWeekday", WEEKDAY([Date], 2) < 6,
+				    "IsCurrentMonth", YEAR([Date]) = YEAR(TODAY()) && MONTH([Date]) = MONTH(TODAY()),
+				    "IsCurrentYear", YEAR([Date]) = YEAR(TODAY()),
+				    "IsPriorMonth", YEAR([Date]) = YEAR(EDATE(TODAY(), -1)) && MONTH([Date]) = MONTH(EDATE(TODAY(), -1)),
+				    "IsPriorYear", YEAR([Date]) = YEAR(TODAY()) - 1 && MONTH([Date]) = MONTH(TODAY())
+				)
+

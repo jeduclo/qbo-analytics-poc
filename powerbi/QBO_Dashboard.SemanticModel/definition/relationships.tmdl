@@ -1,0 +1,28 @@
+relationship AutoDetected_9c9bc831-2ce8-4419-aa98-629cef3b8a7b
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: 'qbo ml_invoice_predictions'.invoice_id
+	toColumn: 'qbo vw_invoice_detail'.invoice_id
+
+relationship AutoDetected_e2f34cf4-9266-4d43-86a1-66f4bbec03e4
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: 'qbo vw_ar_aging'.invoice_id
+	toColumn: 'qbo vw_invoice_detail'.invoice_id
+
+relationship Date_InvoiceDetail_InvoiceDate
+	fromColumn: 'qbo vw_invoice_detail'.invoice_date
+	toColumn: Date.Date
+
+relationship Date_CashReceived_PaymentMonth
+	fromColumn: 'qbo vw_cash_received'.payment_month
+	toColumn: Date.Date
+
+relationship Date_SalesSummary_RevenueMonth
+	fromColumn: 'qbo vw_sales_summary'.revenue_month
+	toColumn: Date.Date
+
+relationship RevenueForecast_ForecastMonth_Date_Date
+	fromColumn: 'qbo ml_revenue_forecast'.forecast_month
+	toColumn: Date.Date
+

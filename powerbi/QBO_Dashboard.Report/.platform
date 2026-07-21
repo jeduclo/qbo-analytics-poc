@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "QBO_Dashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "9d74c1bd-43cd-4ecf-a6fd-7db2408db125"
+  }
+}

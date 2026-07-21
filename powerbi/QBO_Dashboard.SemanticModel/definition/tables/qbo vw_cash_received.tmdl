@@ -1,0 +1,56 @@
+table 'qbo vw_cash_received'
+	lineageTag: 4f702445-4ec1-4b9f-a7d9-a578351ddb4a
+
+	/// The calendar month in which customer payments were received and recorded.
+	column payment_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9bffa628-b6ea-4b76-91af-aebb7f5704ab
+		summarizeBy: none
+		sourceColumn: payment_month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The way the customer paid, such as bank transfer, credit card, or check.
+	column payment_method
+		dataType: string
+		lineageTag: a8590ac8-822c-49e1-b9e3-f328b3d1245e
+		summarizeBy: none
+		sourceColumn: payment_method
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The total dollar amount of customer payments collected during the specified month for the given payment method.
+	column total_received
+		dataType: double
+		lineageTag: 74986f72-7fee-448c-8ca6-f8e74c5d4f61
+		summarizeBy: sum
+		sourceColumn: total_received
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The number of individual payments received during the specified month for the given payment method.
+	column payment_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ac31c84-620f-4870-bd78-bf6f8b851b57
+		summarizeBy: sum
+		sourceColumn: payment_count
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo vw_cash_received' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "vw_cash_received"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

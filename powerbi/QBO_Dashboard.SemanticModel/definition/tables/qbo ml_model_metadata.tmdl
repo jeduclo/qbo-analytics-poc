@@ -1,0 +1,84 @@
+table 'qbo ml_model_metadata'
+	lineageTag: 0db23a5f-6bb0-43fc-9bac-1693bab981b7
+
+	/// The name identifying which machine learning model this performance record describes, such as the invoice overdue-risk classifier.
+	column model_name
+		dataType: string
+		lineageTag: 11018f43-2d44-46c0-a104-446a36df5249
+		summarizeBy: none
+		sourceColumn: model_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The date and time this version of the model was last trained on historical data.
+	column trained_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 2c4d89be-dfe6-4958-ac35-2cd64e33a288
+		summarizeBy: none
+		sourceColumn: trained_at
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The percentage of predictions this model got correct when tested against known historical outcomes.
+	column accuracy
+		dataType: double
+		lineageTag: 649147cb-3d63-4523-9d1c-a2c6f2c2ba53
+		summarizeBy: sum
+		sourceColumn: accuracy
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// A statistical score between 0 and 1 measuring how well the model distinguishes between invoices that will and will not become overdue; closer to 1 means better performance.
+	column auc_roc
+		dataType: double
+		lineageTag: d4b36f74-71fd-4b34-83a9-23c842481191
+		summarizeBy: sum
+		sourceColumn: auc_roc
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The number of historical invoice records used to train this version of the model.
+	column training_rows
+		dataType: int64
+		formatString: 0
+		lineageTag: cff1330f-6e42-4fd9-bf86-65cfd5f10927
+		summarizeBy: sum
+		sourceColumn: training_rows
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The number of distinct data inputs, such as invoice amount or customer history, that the model uses to make its predictions.
+	column feature_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 78a327fd-f86a-42d6-8d17-6d130cc5e606
+		summarizeBy: sum
+		sourceColumn: feature_count
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The version of the underlying XGBoost software library used to build this model, recorded for troubleshooting and reproducibility.
+	column xgboost_version
+		dataType: string
+		lineageTag: e60c3862-2b4e-48f0-ab41-74b3d1c906c5
+		summarizeBy: none
+		sourceColumn: xgboost_version
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo ml_model_metadata' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "ml_model_metadata"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

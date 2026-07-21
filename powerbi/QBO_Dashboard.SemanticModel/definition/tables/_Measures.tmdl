@@ -1,0 +1,1052 @@
+table _Measures
+	lineageTag: 8b957188-eb1b-4143-9a82-378b9787dbcd
+
+	/// The total dollar amount billed to customers across all invoices in the selected time period, regardless of whether they have been paid yet.
+	measure 'Total Revenue' =
+			/*
+			WHAT: Sums the amount column across all rows in vw_invoice_detail, giving
+			total invoiced revenue for the current filter context (period, customer,
+			etc).
+			WHY: A CFO uses this as the top-line billed-revenue figure to track
+			against budget/forecast. An AR manager uses it as the denominator for
+			collection-rate and DSO calculations.
+			EDGE CASES / ASSUMPTIONS: Includes ALL invoices regardless of status
+			(Paid, Open, Overdue) -- this is billed revenue, not cash collected.
+			Blank/null amount values are ignored by SUM. Does not separately account
+			for credit memos or refunds unless already captured as negative amounts
+			in the source data.
+			*/
+			SUM('qbo vw_invoice_detail'[amount])
+		formatString: $ #,##0
+		displayFolder: Core Financial
+		lineageTag: 468a544e-42a5-46df-9ed9-e2755b07bc4f
+
+	/// The total dollar amount customers still owe on unpaid invoices, commonly referred to as Accounts Receivable, or AR.
+	measure 'Total Outstanding AR' =
+			/*
+			WHAT: Sums the balance column from vw_invoice_detail, restricted to rows
+			where balance > 0 -- the total dollar amount still owed by customers.
+			WHY: The core accounts-receivable exposure figure for an AR manager;
+			a CFO tracks it to monitor working capital tied up in unpaid invoices.
+			EDGE CASES / ASSUMPTIONS: Filtering balance > 0 excludes fully paid
+			invoices (balance = 0) and any negative balances (e.g. overpayments or
+			credit adjustments), so this reflects genuine open receivables only, not
+			net position across all invoices.
+			*/
+			CALCULATE(
+			    SUM('qbo vw_invoice_detail'[balance]),
+			    'qbo vw_invoice_detail'[balance] > 0
+			)
+		formatString: $ #,##0
+		displayFolder: Core Financial
+		lineageTag: ec6f93f7-a2bc-4a05-ab07-ee759056e45b
+
+	/// The percentage of billed revenue that has actually been collected in cash so far; a higher percentage means the company is converting more of its billings into cash.
+	measure 'Collection Rate %' =
+			/*
+			WHAT: Percentage of invoiced revenue that has been collected:
+			(Total Revenue - Total Outstanding AR) / Total Revenue.
+			WHY: A headline KPI for a CFO/AR manager to gauge how effectively billed
+			revenue is being converted into cash.
+			EDGE CASES / ASSUMPTIONS: Returns BLANK() when Total Revenue is 0 to avoid
+			a divide-by-zero error. Assumes Total Outstanding AR does not exceed Total
+			Revenue in the same filter context; if it did (e.g. timing mismatches
+			across periods), the rate could go negative.
+			*/
+			VAR Revenue = [Total Revenue]
+			RETURN
+			    IF(
+			        Revenue = 0,
+			        BLANK(),
+			        (Revenue - [Total Outstanding AR]) / Revenue
+			    )
+		formatString: 0.0%
+		displayFolder: Core Financial
+		lineageTag: cd1e9dc4-8ea8-46d2-b14a-80804f3f82ea
+
+	/// The number of distinct customers who have been invoiced during the selected time period.
+	measure 'Active Customers' =
+			/*
+			WHAT: Counts the distinct customer_id values in vw_invoice_detail for the
+			current filter context.
+			WHY: Gives a CFO/AR manager a quick read on how many customers have
+			invoicing activity in the selected period -- useful for tracking customer
+			base size and for normalizing other metrics on a per-customer basis.
+			EDGE CASES / ASSUMPTIONS: Counts any customer with at least one invoice
+			row, regardless of invoice status or amount. Blank/null customer_id
+			values are excluded by DISTINCTCOUNT.
+			*/
+			DISTINCTCOUNT('qbo vw_invoice_detail'[customer_id])
+		displayFolder: Core Financial
+		lineageTag: 85225260-8776-487a-a3ef-3060204cd21e
+
+	/// The total dollar amount of unpaid invoices that are past their due date.
+	measure 'Overdue Amount' =
+			/*
+			WHAT: Sums balance from vw_invoice_detail for rows where status =
+			"Overdue".
+			WHY: Tells a CFO/AR manager exactly how many dollars are past due and at
+			risk of write-off, distinct from AR that is open but not yet due.
+			EDGE CASES / ASSUMPTIONS: Relies on the status field being maintained
+			accurately as the exact text "Overdue" (case-sensitive match in the
+			underlying data). Includes overdue invoices regardless of balance sign.
+			*/
+			CALCULATE(
+			    SUM('qbo vw_invoice_detail'[balance]),
+			    'qbo vw_invoice_detail'[status] = "Overdue"
+			)
+		formatString: $ #,##0
+		displayFolder: Core Financial
+		lineageTag: f3524e2e-360b-49cb-86c8-30c89d572830
+
+	/// The number of invoices that have been fully paid by customers during the selected time period.
+	measure 'Paid Invoice Count' =
+			/*
+			WHAT: Counts invoice_id values in vw_invoice_detail where status = "Paid".
+			WHY: Lets a CFO/AR manager track invoice throughput of the collections
+			process -- how many invoices have been fully settled.
+			EDGE CASES / ASSUMPTIONS: Uses COUNT on invoice_id, so blank/null
+			invoice_id rows would not be counted even if status = "Paid". Assumes
+			each row represents exactly one invoice.
+			*/
+			CALCULATE(
+			    COUNT('qbo vw_invoice_detail'[invoice_id]),
+			    'qbo vw_invoice_detail'[status] = "Paid"
+			)
+		displayFolder: Core Financial
+		lineageTag: 50ac8ca3-902e-4fc2-a1ae-b3c1c83d24ff
+
+	/// The number of invoices that are still outstanding but not yet past their due date.
+	measure 'Open Invoice Count' =
+			/*
+			WHAT: Counts invoice_id values in vw_invoice_detail where status = "Open".
+			WHY: Shows a CFO/AR manager how many invoices are currently outstanding
+			but not yet past due -- the healthy portion of the AR pipeline.
+			EDGE CASES / ASSUMPTIONS: Uses COUNT on invoice_id, so blank/null
+			invoice_id rows would not be counted. Assumes status values are
+			consistently spelled "Open" (case-sensitive match).
+			*/
+			CALCULATE(
+			    COUNT('qbo vw_invoice_detail'[invoice_id]),
+			    'qbo vw_invoice_detail'[status] = "Open"
+			)
+		displayFolder: Core Financial
+		lineageTag: eb69aa2e-4030-4281-9320-44adf0f3ff76
+
+	/// The number of invoices that are past their due date and still unpaid.
+	measure 'Overdue Invoice Count' =
+			/*
+			WHAT: Counts invoice_id values in vw_invoice_detail where status =
+			"Overdue".
+			WHY: Volume-based companion to Overdue Amount -- tells a CFO/AR manager
+			how many distinct invoices, not just how many dollars, are past due.
+			EDGE CASES / ASSUMPTIONS: Uses COUNT on invoice_id, so blank/null
+			invoice_id rows would not be counted. Assumes status values are
+			consistently spelled "Overdue".
+			*/
+			CALCULATE(
+			    COUNT('qbo vw_invoice_detail'[invoice_id]),
+			    'qbo vw_invoice_detail'[status] = "Overdue"
+			)
+		displayFolder: Core Financial
+		lineageTag: e774a262-e786-4271-a44d-9209c1ad72ef
+
+	/// The percentage of all invoices that are currently overdue, giving an early warning signal for collections problems.
+	measure 'Overdue Rate %' =
+			/*
+			WHAT: Ratio of Overdue Invoice Count to the total invoice count (all
+			statuses) in vw_invoice_detail.
+			WHY: Shows a CFO/AR manager what proportion of the invoice book is
+			overdue -- an early-warning signal for collections risk, independent of
+			dollar amounts.
+			EDGE CASES / ASSUMPTIONS: Returns BLANK() when there are no invoices in
+			context, avoiding a divide-by-zero error. The total invoice count counts
+			every row via COUNTROWS regardless of status, so it includes Paid, Open,
+			Overdue, and any other status values present in the data.
+			*/
+			VAR TotalInvoices = COUNTROWS('qbo vw_invoice_detail')
+			RETURN
+			    IF(
+			        TotalInvoices = 0,
+			        BLANK(),
+			        [Overdue Invoice Count] / TotalInvoices
+			    )
+		formatString: 0.0%
+		displayFolder: Core Financial
+		lineageTag: 3d83207c-868b-43e0-bc43-d7ff72952ab6
+
+	/// The number of invoices the machine learning model has flagged as High risk of becoming overdue.
+	measure 'High Risk Invoice Count' =
+			/*
+			WHAT: Counts invoice_id in ml_invoice_predictions where risk_tier =
+			"High".
+			WHY: Surfaces how many invoices the ML overdue-risk model has flagged as
+			high risk, so an AR manager can prioritize outreach before they become
+			actually overdue.
+			EDGE CASES / ASSUMPTIONS: Depends entirely on the ML scoring pipeline
+			having run and populated risk_tier; unscored invoices (blank risk_tier)
+			are excluded. Reflects the risk tier as of each invoice's last scored_at
+			timestamp, not necessarily today.
+			*/
+			CALCULATE(
+			    COUNT('qbo ml_invoice_predictions'[invoice_id]),
+			    'qbo ml_invoice_predictions'[risk_tier] = "High"
+			)
+		displayFolder: ML Intelligence
+		lineageTag: c02f1b89-e792-4ae5-8dff-39f47c46064f
+
+	/// The number of invoices the machine learning model has flagged as Medium risk of becoming overdue.
+	measure 'Medium Risk Invoice Count' =
+			/*
+			WHAT: Counts invoice_id in ml_invoice_predictions where risk_tier =
+			"Medium".
+			WHY: Lets an AR manager see the next tier of watch-list invoices below
+			High risk, useful for planning proactive follow-up before they escalate.
+			EDGE CASES / ASSUMPTIONS: Depends on the ML scoring pipeline having run;
+			unscored invoices are excluded. Reflects risk tier as of last scored_at,
+			not necessarily today.
+			*/
+			CALCULATE(
+			    COUNT('qbo ml_invoice_predictions'[invoice_id]),
+			    'qbo ml_invoice_predictions'[risk_tier] = "Medium"
+			)
+		displayFolder: ML Intelligence
+		lineageTag: 7845dfdf-5ec9-4908-822b-5f1da81853da
+
+	/// The total dollar amount of unpaid balances sitting in invoices the machine learning model considers High risk of becoming overdue.
+	measure 'Total Value at Risk' =
+			/*
+			WHAT: Sums balance from vw_invoice_detail for invoices tagged
+			risk_tier = "High" in ml_invoice_predictions.
+			WHY: Quantifies, in dollars, how much outstanding balance sits in the
+			highest-risk bucket per the ML model -- a CFO uses this to size potential
+			bad-debt exposure and prioritize collections or financing decisions.
+			EDGE CASES / ASSUMPTIONS: ml_invoice_predictions.balance is blank on all
+			rows (Workshop 7 ML scoring pipeline never populated it) so this measure
+			sources balance from the 1:1-related vw_invoice_detail table instead,
+			via the invoice_id relationship. Revert to ml_invoice_predictions[balance]
+			once the scoring pipeline is fixed to populate it.
+			*/
+			CALCULATE(
+			    SUM('qbo vw_invoice_detail'[balance]),
+			    'qbo ml_invoice_predictions'[risk_tier] = "High"
+			)
+		formatString: $ #,##0
+		displayFolder: ML Intelligence
+		lineageTag: e0b7065b-f266-427d-9784-60a552965efe
+
+	/// The estimated dollar cost, per day, of carrying the company's High-risk unpaid invoices, based on the current cost of financing.
+	measure 'Daily Financing Cost' =
+			/*
+			WHAT: Sums implicit_cost_at_current_rate from ml_invoice_predictions for
+			invoices tagged risk_tier = "High" -- the estimated daily cost of capital
+			tied up in high-risk balances.
+			WHY: Gives a CFO a dollar figure for the ongoing cost of carrying
+			high-risk receivables, supporting decisions like early-payment discounts,
+			factoring, or collections prioritization.
+			EDGE CASES / ASSUMPTIONS: Assumes implicit_cost_at_current_rate already
+			represents a per-day cost computed by the ML pipeline at a fixed current
+			financing rate; this measure does not recompute the rate itself. Limited
+			to the "High" tier only, so it understates total financing cost across
+			Medium/Low risk invoices.
+			*/
+			CALCULATE(
+			    SUM('qbo ml_invoice_predictions'[implicit_cost_at_current_rate]),
+			    'qbo ml_invoice_predictions'[risk_tier] = "High"
+			)
+		formatString: $ #,##0
+		displayFolder: ML Intelligence
+		lineageTag: 68bb4792-fde4-41e1-a57c-d175f8e7e994
+
+	/// A score showing how reliable the machine learning model is at predicting which invoices will become overdue; a higher score means more trustworthy predictions.
+	measure 'Model Accuracy %' =
+			/*
+			WHAT: Returns the auc_roc value from ml_model_metadata for the row where
+			model_name = "overdue_classifier" -- the AUC-ROC score of the ML model
+			that predicts invoice overdue risk.
+			WHY: Lets a CFO or analytics team monitor how trustworthy the risk-tier
+			and financing-cost measures above are; a declining AUC-ROC signals the
+			model needs retraining before its outputs are relied on for decisions.
+			EDGE CASES / ASSUMPTIONS: Assumes exactly one metadata row exists for
+			model_name = "overdue_classifier"; SELECTEDVALUE returns BLANK() if zero
+			or more than one row matches. Ignores other filters/slicers in the report
+			since the model_name filter is applied explicitly inside CALCULATE.
+			*/
+			CALCULATE(
+			    SELECTEDVALUE('qbo ml_model_metadata'[auc_roc]),
+			    'qbo ml_model_metadata'[model_name] = "overdue_classifier"
+			)
+		formatString: 0.0%
+		displayFolder: ML Intelligence
+		lineageTag: ebbd5750-408c-4080-b36f-4a11206e78a3
+
+	/// The machine learning model's predicted total revenue for the upcoming month under the company's baseline, or most likely, scenario.
+	measure 'Forecast Revenue Next Month' =
+			// WHAT: Returns forecast_revenue from ml_revenue_forecast for scenario =
+			// "Base" and the earliest forecast_month that is still in the future
+			// (strictly greater than TODAY()).
+			// WHY: Gives a CFO a single forward-looking revenue number for next month
+			// under the baseline scenario, for cash-flow planning and reporting.
+			// EDGE CASES / ASSUMPTIONS: "Next month" is the nearest future
+			// forecast_month relative to today's date, not a fixed calendar month --
+			// if the forecast table has gaps, this returns the next available
+			// forecast row rather than strictly next calendar month. Returns
+			// BLANK() if no "Base" scenario rows exist with forecast_month >
+			// TODAY(). Assumes at most one Base-scenario row exists per
+			// forecast_month.
+			VAR NextMonthDate =
+			    CALCULATE(
+			        MIN('qbo ml_revenue_forecast'[forecast_month]),
+			        'qbo ml_revenue_forecast'[scenario] = "Base",
+			        'qbo ml_revenue_forecast'[forecast_month] > TODAY()
+			    )
+			RETURN
+			    CALCULATE(
+			        SELECTEDVALUE('qbo ml_revenue_forecast'[forecast_revenue]),
+			        'qbo ml_revenue_forecast'[scenario] = "Base",
+			        'qbo ml_revenue_forecast'[forecast_month] = NextMonthDate
+			    )
+		formatString: $ #,##0
+		displayFolder: ML Intelligence
+		lineageTag: 33831cbd-0a12-431a-a8a4-63f23a569f2a
+
+	/// This measure is a placeholder that currently always shows zero, because the data needed to calculate true average payment time (matching individual payments to individual invoices) is not yet available in this model.
+	measure 'Average Days to Pay' =
+			/*
+			WHAT: Placeholder measure -- always returns 0.
+			WHY: A true "Average Days to Pay" would measure the elapsed time between
+			an invoice's invoice_date and the date its payment was actually received,
+			which a CFO/AR manager would use to gauge real-world collections speed by
+			customer or segment.
+			LIMITATION / ASSUMPTIONS: This is NOT calculable from the current model.
+			vw_cash_received is pre-aggregated by payment_month and payment_method
+			only -- it has no customer_id, no invoice_id, and no exact payment date,
+			so individual payments cannot be matched back to the invoices they
+			settled. A true days-to-pay figure would require a transaction-level
+			payments table keyed by invoice_id (or customer_id + exact payment date)
+			joined to vw_invoice_detail[invoice_date]. Until such a table is added to
+			the model, this measure is a placeholder returning 0 so downstream
+			reports referencing it don't break.
+			*/
+			0
+		displayFolder: Financial Ratios
+		lineageTag: 48b20d1b-427d-4e34-a118-333cea970a7b
+
+	/// The average number of days it currently takes to collect payment after a sale is billed; a lower number means the company is collecting cash faster.
+	measure 'DSO (Days Sales Outstanding)' =
+			/*
+			WHAT: (Total Outstanding AR / Total Revenue) * 365 -- approximates how
+			many days of revenue are currently tied up in unpaid receivables.
+			WHY: DSO is a standard CFO/treasury KPI for AR efficiency; a lower DSO
+			means customers are paying faster and less cash is tied up in
+			receivables.
+			EDGE CASES / ASSUMPTIONS: Returns BLANK() when Total Revenue is 0 to
+			avoid a divide-by-zero error. Uses 365 as a fixed annualization factor
+			regardless of the actual number of days in the filtered period, so this
+			is most meaningful when evaluated over a full-year context -- applying it
+			to a partial-period filter (e.g. a single month) will overstate DSO.
+			*/
+			VAR Revenue = [Total Revenue]
+			RETURN
+			    IF(
+			        Revenue = 0,
+			        BLANK(),
+			        DIVIDE([Total Outstanding AR], Revenue) * 365
+			    )
+		displayFolder: Financial Ratios
+		lineageTag: cd45cff0-7738-4a39-8822-1da72f3d26e3
+
+	/// The total dollar amount billed to customers so far in the current calendar month.
+	measure 'Total Revenue MTD' =
+			// GROUP 1 -- MONTH-TO-DATE
+			// WHAT: Total Revenue accumulated from the start of the current calendar
+			// month through the latest date in the current filter context.
+			// COMPARES TO: N/A (running total within the current month, not a
+			// comparison measure).
+			// WHEN TO USE: Mid-month, to see how much revenue has been billed so far
+			// this month -- e.g. a CFO checking progress against a monthly target.
+			// TIME INTELLIGENCE: DATESMTD('Date'[Date]) needs 'Date' marked as the
+			// model's official date table to know where each month starts, and
+			// relies on the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows down to the elapsed days of the
+			// month.
+			CALCULATE([Total Revenue], DATESMTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\1. Month-to-Date
+		lineageTag: e4f42f89-1e3d-41bc-8fbd-c42f370f55fd
+
+	/// The total dollar amount still owed on invoices billed so far in the current calendar month.
+	measure 'Total Outstanding AR MTD' =
+			// GROUP 1 -- MONTH-TO-DATE
+			// WHAT: Total Outstanding AR for invoices dated within the current
+			// calendar month, from month start through the latest date in context.
+			// COMPARES TO: N/A (running total within the current month).
+			// WHEN TO USE: By an AR manager mid-month to see how much of this
+			// month's billing is still uncollected.
+			// TIME INTELLIGENCE: DATESMTD('Date'[Date]) requires 'Date' to be marked
+			// as the official date table, and relies on the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship. NOTE: this measure
+			// is scoped by invoice_date (when the invoice was issued), not by a
+			// separate AR snapshot date, since the model has no point-in-time AR
+			// balance table.
+			CALCULATE([Total Outstanding AR], DATESMTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\1. Month-to-Date
+		lineageTag: 658ea2df-24dd-4e0e-8a76-c63e8f8c3fb9
+
+	/// The total dollar amount billed to customers so far in the current quarter.
+	measure 'Total Revenue QTD' =
+			// GROUP 2 -- QUARTER-TO-DATE
+			// WHAT: Total Revenue accumulated from the start of the current fiscal
+			// quarter through the latest date in the current filter context.
+			// COMPARES TO: N/A (running total within the current quarter).
+			// WHEN TO USE: In quarterly business reviews to track progress toward a
+			// quarterly revenue target before the quarter closes.
+			// TIME INTELLIGENCE: DATESQTD('Date'[Date]) requires 'Date' to be marked
+			// as the official date table so the engine knows quarter boundaries, and
+			// relies on the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows.
+			CALCULATE([Total Revenue], DATESQTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\2. Quarter-to-Date
+		lineageTag: baabd38c-76db-4312-9694-5e49524004b8
+
+	/// The total dollar amount still owed on invoices billed so far in the current quarter.
+	measure 'Total Outstanding AR QTD' =
+			// GROUP 2 -- QUARTER-TO-DATE
+			// WHAT: Total Outstanding AR for invoices dated within the current
+			// quarter, from quarter start through the latest date in context.
+			// COMPARES TO: N/A (running total within the current quarter).
+			// WHEN TO USE: By a CFO/AR manager reviewing how much of this quarter's
+			// billings remain uncollected as the quarter progresses.
+			// TIME INTELLIGENCE: DATESQTD('Date'[Date]) requires 'Date' to be marked
+			// as the official date table, and relies on the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship. Scoped by
+			// invoice_date, not a separate AR snapshot date.
+			CALCULATE([Total Outstanding AR], DATESQTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\2. Quarter-to-Date
+		lineageTag: b1f67fa6-4f5e-4a2d-933d-e0756a36a26a
+
+	/// The total dollar amount billed to customers so far in the current calendar year.
+	measure 'Total Revenue YTD' =
+			// GROUP 3 -- YEAR-TO-DATE
+			// WHAT: Total Revenue accumulated from the start of the current calendar
+			// year through the latest date in the current filter context.
+			// COMPARES TO: N/A (running total within the current year).
+			// WHEN TO USE: In board/annual reporting to track cumulative revenue
+			// against the annual plan.
+			// TIME INTELLIGENCE: DATESYTD('Date'[Date]) requires 'Date' to be marked
+			// as the official date table so the engine knows the year boundary, and
+			// relies on the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows.
+			CALCULATE([Total Revenue], DATESYTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\3. Year-to-Date
+		lineageTag: 081477e3-9b40-4e2a-a059-ab90231e4069
+
+	/// The total dollar amount still owed on invoices billed so far in the current calendar year.
+	measure 'Total Outstanding AR YTD' =
+			// GROUP 3 -- YEAR-TO-DATE
+			// WHAT: Total Outstanding AR for invoices dated within the current
+			// calendar year, from year start through the latest date in context.
+			// COMPARES TO: N/A (running total within the current year).
+			// WHEN TO USE: By a CFO assessing cumulative uncollected billings for
+			// the year, e.g. at fiscal year-end close.
+			// TIME INTELLIGENCE: DATESYTD('Date'[Date]) requires 'Date' to be marked
+			// as the official date table, and relies on the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship. Scoped by
+			// invoice_date, not a separate AR snapshot date.
+			CALCULATE([Total Outstanding AR], DATESYTD('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\3. Year-to-Date
+		lineageTag: fc3e9484-0659-408d-8cb1-23d310b68a6b
+
+	/// The total dollar amount billed to customers during the calendar month immediately before the current one, used as a baseline for comparison.
+	measure 'Revenue Prior Month' =
+			// GROUP 4 -- PRIOR PERIOD COMPARISONS
+			// WHAT: Total Revenue for the calendar month immediately preceding the
+			// month(s) in the current filter context.
+			// COMPARES TO: The prior calendar month.
+			// WHEN TO USE: As the baseline for month-over-month variance and growth
+			// analysis, or whenever a user wants to see "how did last month do".
+			// TIME INTELLIGENCE: PREVIOUSMONTH('Date'[Date]) requires 'Date' to be
+			// marked as the official date table to identify month boundaries, and
+			// relies on the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows to that prior month.
+			CALCULATE([Total Revenue], PREVIOUSMONTH('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\4. Prior Period Comparisons
+		lineageTag: ed3e4cc0-ad51-4155-85fb-a80be6edd40f
+
+	/// The total dollar amount billed to customers during the calendar quarter immediately before the current one, used as a baseline for comparison.
+	measure 'Revenue Prior Quarter' =
+			// GROUP 4 -- PRIOR PERIOD COMPARISONS
+			// WHAT: Total Revenue for the fiscal quarter immediately preceding the
+			// quarter(s) in the current filter context.
+			// COMPARES TO: The prior calendar quarter.
+			// WHEN TO USE: In quarterly business reviews to see quarter-over-quarter
+			// performance before computing variance.
+			// TIME INTELLIGENCE: PREVIOUSQUARTER('Date'[Date]) requires 'Date' to be
+			// marked as the official date table to identify quarter boundaries, and
+			// relies on the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows to that prior quarter.
+			CALCULATE([Total Revenue], PREVIOUSQUARTER('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\4. Prior Period Comparisons
+		lineageTag: f8238ec5-9790-4076-bbac-e6915f157463
+
+	/// The total dollar amount billed to customers during the same period one year ago, used to compare performance year over year.
+	measure 'Revenue Prior Year' =
+			// GROUP 4 -- PRIOR PERIOD COMPARISONS
+			// WHAT: Total Revenue for the same date period exactly one year before
+			// the period in the current filter context.
+			// COMPARES TO: The same period last year (year-over-year baseline).
+			// WHEN TO USE: For annual reporting and seasonality analysis, or
+			// whenever a user wants to compare this year's performance to last
+			// year's for the same period.
+			// TIME INTELLIGENCE: SAMEPERIODLASTYEAR('Date'[Date]) requires 'Date' to
+			// be marked as the official date table (it needs a contiguous calendar
+			// to shift by exactly one year), and relies on the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship to filter invoice
+			// rows to the prior-year period.
+			CALCULATE([Total Revenue], SAMEPERIODLASTYEAR('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\4. Prior Period Comparisons
+		lineageTag: 189f7b61-b0c5-4cbd-8fe1-6e4f90cc9fca
+
+	/// The total dollar amount still owed on invoices billed during the calendar month immediately before the current one.
+	measure 'AR Prior Month' =
+			// GROUP 4 -- PRIOR PERIOD COMPARISONS
+			// WHAT: Total Outstanding AR for invoices dated in the calendar month
+			// immediately preceding the month(s) in the current filter context.
+			// COMPARES TO: The prior calendar month.
+			// WHEN TO USE: By an AR manager to see whether outstanding receivables
+			// are rising or falling month over month.
+			// TIME INTELLIGENCE: PREVIOUSMONTH('Date'[Date]) requires 'Date' to be
+			// marked as the official date table, and relies on the active
+			// Date[Date] -> 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// Scoped by invoice_date, not a separate AR snapshot date.
+			CALCULATE([Total Outstanding AR], PREVIOUSMONTH('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\4. Prior Period Comparisons
+		lineageTag: 66807662-cb8c-49a0-9848-59a732f5f990
+
+	/// The total dollar amount still owed on invoices billed during the same period one year ago.
+	measure 'AR Prior Year' =
+			// GROUP 4 -- PRIOR PERIOD COMPARISONS
+			// WHAT: Total Outstanding AR for invoices dated in the same period one
+			// year before the period in the current filter context.
+			// COMPARES TO: The same period last year.
+			// WHEN TO USE: For year-over-year AR trend analysis, e.g. checking
+			// whether the company's receivables discipline has improved versus last
+			// year.
+			// TIME INTELLIGENCE: SAMEPERIODLASTYEAR('Date'[Date]) requires 'Date' to
+			// be marked as the official date table, and relies on the active
+			// Date[Date] -> 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// Scoped by invoice_date, not a separate AR snapshot date.
+			CALCULATE([Total Outstanding AR], SAMEPERIODLASTYEAR('Date'[Date]))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\4. Prior Period Comparisons
+		lineageTag: 21ccb141-6c28-4b1f-9191-afae3a8a901d
+
+	/// The dollar change in billed revenue between the current month and the prior month.
+	measure 'Revenue MoM Variance $' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Dollar difference between Total Revenue in the current filter
+			// context and Revenue Prior Month.
+			// COMPARES TO: The prior calendar month (via [Revenue Prior Month]).
+			// WHEN TO USE: To quantify, in dollars, how much revenue grew or shrank
+			// versus last month -- typically shown alongside Revenue MoM Variance %.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Month], which uses
+			// PREVIOUSMONTH('Date'[Date]) and therefore requires 'Date' to be marked
+			// as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship to be in place.
+			[Total Revenue] - [Revenue Prior Month]
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: b932b73f-9a93-4821-8f38-2dbc88e7225e
+
+	/// The percentage change in billed revenue between the current month and the prior month.
+	measure 'Revenue MoM Variance %' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Revenue MoM Variance $ expressed as a percentage of Revenue
+			// Prior Month.
+			// COMPARES TO: The prior calendar month.
+			// WHEN TO USE: Alongside the dollar variance, to communicate growth or
+			// decline as a normalized rate -- easier to compare across periods of
+			// different size than a raw dollar figure.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Month] (built on
+			// PREVIOUSMONTH('Date'[Date])), which requires 'Date' to be marked as
+			// the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// EDGE CASE: Returns BLANK() via DIVIDE's third argument when Revenue
+			// Prior Month is zero or blank, avoiding a divide-by-zero error.
+			DIVIDE([Revenue MoM Variance $], [Revenue Prior Month], BLANK())
+		formatString: 0.0%
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: a7cec08b-c754-46a6-bf7b-65de972d3852
+
+	/// The dollar change in billed revenue between the current quarter and the prior quarter.
+	measure 'Revenue QoQ Variance $' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Dollar difference between Total Revenue in the current filter
+			// context and Revenue Prior Quarter.
+			// COMPARES TO: The prior calendar quarter (via [Revenue Prior Quarter]).
+			// WHEN TO USE: In quarterly business reviews to quantify quarter-over-
+			// quarter revenue change in dollars.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Quarter], which uses
+			// PREVIOUSQUARTER('Date'[Date]) and therefore requires 'Date' to be
+			// marked as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			[Total Revenue] - [Revenue Prior Quarter]
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: 3cefeff4-8273-461a-858f-b5cb58d2f158
+
+	/// The percentage change in billed revenue between the current quarter and the prior quarter.
+	measure 'Revenue QoQ Variance %' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Revenue QoQ Variance $ expressed as a percentage of Revenue
+			// Prior Quarter.
+			// COMPARES TO: The prior calendar quarter.
+			// WHEN TO USE: In quarterly board decks to show growth rate
+			// quarter-over-quarter alongside the dollar variance.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Quarter] (built on
+			// PREVIOUSQUARTER('Date'[Date])), which requires 'Date' to be marked as
+			// the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// EDGE CASE: Returns BLANK() via DIVIDE's third argument when Revenue
+			// Prior Quarter is zero or blank.
+			DIVIDE([Revenue QoQ Variance $], [Revenue Prior Quarter], BLANK())
+		formatString: 0.0%
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: a7f619cb-c744-4b9e-9a4f-f338b5cd4d5c
+
+	/// The dollar change in billed revenue compared to the same period one year ago.
+	measure 'Revenue YoY Variance $' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Dollar difference between Total Revenue in the current filter
+			// context and Revenue Prior Year.
+			// COMPARES TO: The same period one year ago (via [Revenue Prior Year]).
+			// WHEN TO USE: In annual reporting to quantify year-over-year revenue
+			// change in dollars, adjusting for seasonality by comparing like periods.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Year], which uses
+			// SAMEPERIODLASTYEAR('Date'[Date]) and therefore requires 'Date' to be
+			// marked as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			[Total Revenue] - [Revenue Prior Year]
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: dc232df8-6f8e-4952-a656-ae81995a27a9
+
+	/// The percentage change in billed revenue compared to the same period one year ago.
+	measure 'Revenue YoY Variance %' =
+			// GROUP 5 -- VARIANCE VS PRIOR PERIOD
+			// WHAT: Revenue YoY Variance $ expressed as a percentage of Revenue
+			// Prior Year.
+			// COMPARES TO: The same period one year ago.
+			// WHEN TO USE: The headline year-over-year growth rate a CFO would cite
+			// in annual or board-level reporting.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Prior Year] (built on
+			// SAMEPERIODLASTYEAR('Date'[Date])), which requires 'Date' to be marked
+			// as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// EDGE CASE: Returns BLANK() via DIVIDE's third argument when Revenue
+			// Prior Year is zero or blank.
+			DIVIDE([Revenue YoY Variance $], [Revenue Prior Year], BLANK())
+		formatString: 0.0%
+		displayFolder: Time Intelligence\5. Variance vs Prior Period
+		lineageTag: 4a44f4bf-f76e-479a-ad1d-369df8fcd17b
+
+	/// The average monthly billed revenue over the current month and the two months before it, used to smooth out short-term ups and downs.
+	measure 'Revenue 3-Month Moving Average' =
+			// GROUP 6 -- MOVING AVERAGES
+			// WHAT: Average monthly revenue over the current month plus the 2 prior
+			// months (total revenue in the trailing 3-month window, divided by 3).
+			// COMPARES TO: N/A (a smoothed trend measure, not a period comparison).
+			// WHEN TO USE: To smooth out month-to-month noise/seasonality and see
+			// the underlying revenue trend -- useful on trend charts alongside raw
+			// monthly revenue.
+			// TIME INTELLIGENCE: DATESINPERIOD('Date'[Date], ..., -3, MONTH) requires
+			// 'Date' to be marked as the official date table so the engine can walk
+			// back 3 whole calendar months from the current context, and relies on
+			// the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship to filter invoice rows for that window.
+			VAR CurrentDate = MAX('Date'[Date])
+			VAR WindowRevenue = CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], CurrentDate, -3, MONTH))
+			RETURN DIVIDE(WindowRevenue, 3)
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\6. Moving Averages
+		lineageTag: 54fb804d-70ab-4a97-982f-ad578f26b1eb
+
+	/// The average monthly billed revenue over the current month and the five months before it, used to show a longer-term revenue trend.
+	measure 'Revenue 6-Month Moving Average' =
+			// GROUP 6 -- MOVING AVERAGES
+			// WHAT: Average monthly revenue over the current month plus the 5 prior
+			// months (total revenue in the trailing 6-month window, divided by 6).
+			// COMPARES TO: N/A (a smoothed trend measure, not a period comparison).
+			// WHEN TO USE: For a longer-horizon trend line than the 3-month average,
+			// useful when the business has more month-to-month volatility and a
+			// smoother signal is needed.
+			// TIME INTELLIGENCE: DATESINPERIOD('Date'[Date], ..., -6, MONTH) requires
+			// 'Date' to be marked as the official date table so the engine can walk
+			// back 6 whole calendar months, and relies on the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship to filter invoice
+			// rows for that window.
+			VAR CurrentDate = MAX('Date'[Date])
+			VAR WindowRevenue = CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], CurrentDate, -6, MONTH))
+			RETURN DIVIDE(WindowRevenue, 6)
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\6. Moving Averages
+		lineageTag: f7e867df-9482-4d0a-95e9-0f2a5656050b
+
+	/// The total billed revenue over the most recent twelve months, giving an annualized revenue figure that updates every month.
+	measure 'Revenue Rolling 12 Months' =
+			// GROUP 6 -- MOVING AVERAGES
+			// WHAT: Total (not averaged) revenue summed over the trailing 12
+			// calendar months ending at the latest date in the current filter
+			// context -- a rolling annual revenue figure.
+			// COMPARES TO: N/A (a trailing-twelve-months trend measure).
+			// WHEN TO USE: To track annualized revenue run-rate on a rolling basis
+			// without waiting for a fixed fiscal year-end -- common on executive
+			// dashboards as "TTM Revenue".
+			// TIME INTELLIGENCE: DATESINPERIOD('Date'[Date], ..., -12, MONTH)
+			// requires 'Date' to be marked as the official date table so the engine
+			// can walk back exactly 12 calendar months, and relies on the active
+			// Date[Date] -> 'qbo vw_invoice_detail'[invoice_date] relationship to
+			// filter invoice rows for that window.
+			CALCULATE([Total Revenue], DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -12, MONTH))
+		formatString: $ #,##0
+		displayFolder: Time Intelligence\6. Moving Averages
+		lineageTag: 0b81ee3b-91e8-4743-bc10-b27025f0eac0
+
+	/// A plain-language label, Growing, Declining, or Flat, describing whether billed revenue increased, decreased, or stayed the same compared to the prior month.
+	measure 'Revenue Growth Flag' =
+			// GROUP 7 -- GROWTH FLAGS
+			// WHAT: A text label -- "Growing", "Declining", or "Flat" -- based on the
+			// sign of Revenue MoM Variance $.
+			// COMPARES TO: The prior calendar month (indirectly, via the variance
+			// measure it reads).
+			// WHEN TO USE: For conditional formatting or plain-language callouts on
+			// a dashboard so a non-technical reader can see direction at a glance
+			// without reading a dollar figure.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue MoM Variance $], which in
+			// turn depends on [Revenue Prior Month] (built on
+			// PREVIOUSMONTH('Date'[Date])). That chain requires 'Date' to be marked
+			// as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			// EDGE CASE: Returns "Flat" when the variance is BLANK() (e.g. no prior
+			// month data) as well as when it is exactly zero.
+			VAR VarianceAmt = [Revenue MoM Variance $]
+			RETURN
+			    IF(
+			        ISBLANK(VarianceAmt),
+			        "Flat",
+			        IF(VarianceAmt > 0, "Growing", IF(VarianceAmt < 0, "Declining", "Flat"))
+			    )
+		displayFolder: Time Intelligence\7. Growth Flags
+		lineageTag: 821fc3a8-70a7-460e-804a-17f791587d15
+
+	/// A simple up, down, or flat arrow symbol summarizing whether billed revenue is growing, declining, or unchanged compared to the prior month.
+	measure 'Revenue Trend Arrow' =
+			// GROUP 7 -- GROWTH FLAGS
+			// WHAT: A single Unicode arrow character summarizing [Revenue Growth
+			// Flag]: up-arrow for Growing, down-arrow for Declining, em-dash for
+			// Flat.
+			// COMPARES TO: The prior calendar month (indirectly, via [Revenue Growth
+			// Flag]).
+			// WHEN TO USE: As a compact visual indicator in KPI cards or table rows
+			// where space doesn't allow for a full text label or chart.
+			// TIME INTELLIGENCE: No time intelligence function is called directly
+			// here, but this measure depends on [Revenue Growth Flag], which
+			// ultimately depends on PREVIOUSMONTH('Date'[Date]) via [Revenue Prior
+			// Month]. That chain requires 'Date' to be marked as the official date
+			// table and the active Date[Date] -> 'qbo vw_invoice_detail'[invoice_date]
+			// relationship.
+			VAR Flag = [Revenue Growth Flag]
+			RETURN
+			    SWITCH(
+			        Flag,
+			        "Growing", "▲",
+			        "Declining", "▼",
+			        "—"
+			    )
+		displayFolder: Time Intelligence\7. Growth Flags
+		lineageTag: 49a5513f-ca13-425d-bb45-fda7a4664a90
+
+	/// An approximate measure of how much of each revenue dollar the company keeps after accounting for uncollected (overdue) revenue; this is a simplified stand-in for a true gross margin calculation, since the model does not yet contain detailed cost data.
+	measure 'Gross Margin %' =
+			// (a) STANDARD DEFINITION: Gross Margin % = (Revenue - COGS) / Revenue --
+			// the percentage of revenue remaining after subtracting the direct cost
+			// of delivering goods/services.
+			// DATA LIMITATION / PROXY: vw_pl_structure is a chart-of-accounts mapping
+			// table only (gl_account, fs_line_item, section, sign flags) -- it has no
+			// numeric amount column, so a true Revenue/COGS split cannot be computed
+			// from it in the current model. As a proxy, this measure computes
+			// (Total Revenue - Overdue Amount) / Total Revenue, treating overdue
+			// receivables as a rough stand-in for value erosion. This is NOT a true
+			// gross margin and should be replaced once a P&L amounts table (or GL
+			// detail with dollar values) is added to the model.
+			// (b) HIGH/LOW: A higher % means more of each revenue dollar is retained
+			// (or, in this proxy, less revenue is tied up in overdue receivables); a
+			// lower % signals thin margins or, in this proxy, a larger share of
+			// billed revenue going uncollected.
+			// (c) BENCHMARK: Professional services SMBs typically run 50-70% true
+			// gross margin (labor-heavy delivery cost). This proxy is not directly
+			// comparable to that benchmark and should be interpreted with caution
+			// until real COGS data is available.
+			VAR RevenueAmt = [Total Revenue]
+			RETURN
+			    IF(
+			        RevenueAmt = 0,
+			        BLANK(),
+			        (RevenueAmt - [Overdue Amount]) / RevenueAmt
+			    )
+		formatString: 0.0%
+		displayFolder: Financial Ratios
+		lineageTag: 6d189102-91da-4e2a-b89f-20f71f3692fe
+
+	/// A standard measure of short-term financial health comparing what a company owns to what it owes in the near term; this measure cannot currently be calculated because the model does not yet contain balance sheet dollar amounts.
+	measure 'Current Ratio' =
+			// (a) STANDARD DEFINITION: Current Ratio = Current Assets / Current
+			// Liabilities -- a liquidity ratio measuring whether a business has
+			// enough short-term assets to cover short-term obligations.
+			// (b) HIGH/LOW: A ratio > 1 generally means current assets exceed
+			// current liabilities (adequate short-term liquidity); a ratio < 1
+			// signals the business may struggle to meet obligations due within a
+			// year. Very high ratios (> 3) can indicate idle cash or excess
+			// inventory not being put to productive use.
+			// (c) BENCHMARK: Healthy professional services SMBs typically target a
+			// Current Ratio between 1.5 and 3.0.
+			// DATA LIMITATION: vw_bs_structure is a chart-of-accounts mapping table
+			// only (gl_account, section, sign flags) -- it has no numeric balance
+			// column, so Current Assets and Current Liabilities cannot be computed
+			// from the current model. Per user direction, this measure is a
+			// placeholder returning BLANK() until a balance-sheet amounts table
+			// (trial balance or GL balances by account) is added to the model.
+			BLANK()
+		displayFolder: Financial Ratios
+		lineageTag: d4cc52ac-2f3d-4765-8bec-7d6d8ac05daa
+
+	/// A measure of how many times the company collects its average outstanding customer balance during the period; a higher number means faster collections.
+	measure 'AR Turnover' =
+			// (a) STANDARD DEFINITION: AR Turnover = Revenue / Average Accounts
+			// Receivable -- measures how many times, over the period, a business
+			// collects its average receivables balance. Calculated here as Total
+			// Revenue divided by the average of the current month's Total
+			// Outstanding AR and the prior month's AR ([AR Prior Month]).
+			// (b) HIGH/LOW: A higher turnover means the company collects its
+			// receivables quickly (good cash conversion); a lower turnover signals
+			// slow collections and cash tied up in AR.
+			// (c) BENCHMARK: Professional services SMBs typically see an annualized
+			// AR Turnover of roughly 6-12x per year (monthly to bi-monthly
+			// collection cycles). This measure is not annualized, so compare it
+			// consistently within the same period granularity.
+			// TIME INTELLIGENCE NOTE: Depends on [AR Prior Month], which uses
+			// PREVIOUSMONTH('Date'[Date]) and therefore requires 'Date' to be marked
+			// as the official date table and the active Date[Date] ->
+			// 'qbo vw_invoice_detail'[invoice_date] relationship.
+			VAR AvgAR = DIVIDE([Total Outstanding AR] + [AR Prior Month], 2)
+			RETURN
+			    IF(
+			        AvgAR = 0,
+			        BLANK(),
+			        DIVIDE([Total Revenue], AvgAR)
+			    )
+		formatString: 0.00
+		displayFolder: Financial Ratios
+		lineageTag: 63809ebf-a368-4ac1-bd87-9815817a1a7a
+
+	/// The percentage of all invoices that have reached fully-paid status, showing how effectively the company is closing out its billing.
+	measure 'Collection Efficiency %' =
+			// (a) STANDARD DEFINITION: Collection Efficiency % = Paid Invoices /
+			// Total Invoices -- the share of all invoices that have reached a fully
+			// paid state, independent of dollar value.
+			// (b) HIGH/LOW: A higher % means most invoices reach Paid status; a
+			// lower % means a large share of the invoice book remains open or
+			// overdue, signalling collections process issues.
+			// (c) BENCHMARK: Well-run professional services SMBs typically see
+			// 80-95% of invoices reach Paid status within a normal billing cycle.
+			VAR TotalInvoices = COUNTROWS('qbo vw_invoice_detail')
+			RETURN
+			    IF(
+			        TotalInvoices = 0,
+			        BLANK(),
+			        DIVIDE([Paid Invoice Count], TotalInvoices)
+			    )
+		formatString: 0.0%
+		displayFolder: Financial Ratios
+		lineageTag: 2e3ca6fc-031d-4b40-8ac1-83ed5e12cec2
+
+	/// The percentage of total unpaid customer balances that the machine learning model considers High risk of becoming uncollectible.
+	measure 'Invoice Value at Risk %' =
+			// (a) STANDARD DEFINITION: Invoice Value at Risk % = ML-flagged
+			// High-Risk Balance / Total Outstanding AR -- the share of all open
+			// receivables that the ML risk model considers high risk of becoming
+			// overdue or uncollectible.
+			// (b) HIGH/LOW: A higher % means a larger portion of outstanding AR is
+			// concentrated in high-risk invoices (elevated bad-debt exposure); a
+			// lower % means the AR book is generally healthier or risk is more
+			// spread out.
+			// (c) BENCHMARK: For a professional services SMB, keeping Invoice Value
+			// at Risk under roughly 10-15% of total AR is generally considered
+			// healthy; sustained levels above 20-25% warrant tightening credit
+			// policy or increasing collections follow-up.
+			VAR TotalAR = [Total Outstanding AR]
+			RETURN
+			    IF(
+			        TotalAR = 0,
+			        BLANK(),
+			        DIVIDE([Total Value at Risk], TotalAR)
+			    )
+		formatString: 0.0%
+		displayFolder: ML Intelligence
+		lineageTag: 4a501794-562a-453a-89a0-303caae3dc93
+
+	/// The average dollar amount of a single customer invoice.
+	measure 'Average Invoice Value' =
+			// (a) STANDARD DEFINITION: Average Invoice Value = Total Revenue / Total
+			// Invoice Count -- the mean dollar size of an invoice.
+			// (b) HIGH/LOW: A rising average invoice value can indicate larger deals
+			// or upsell success; a falling value can indicate smaller engagements or
+			// discounting. Extremely low values relative to overhead can signal an
+			// unsustainable pricing model.
+			// (c) BENCHMARK: Highly variable by service line; professional services
+			// SMBs commonly see average invoice values in the low-to-mid thousands
+			// of dollars, but this is best benchmarked against the firm's own
+			// historical trend rather than an industry norm.
+			VAR TotalInvoices = COUNTROWS('qbo vw_invoice_detail')
+			RETURN
+			    IF(
+			        TotalInvoices = 0,
+			        BLANK(),
+			        DIVIDE([Total Revenue], TotalInvoices)
+			    )
+		formatString: $ #,##0
+		displayFolder: Core Financial
+		lineageTag: 187322fb-d00b-4a38-9d78-1e55fe8556af
+
+	/// The average amount of revenue billed per customer during the selected time period.
+	measure 'Revenue per Active Customer' =
+			// (a) STANDARD DEFINITION: Revenue per Active Customer = Total Revenue /
+			// Distinct Active Customers -- average revenue contribution per customer
+			// with invoicing activity in the period.
+			// (b) HIGH/LOW: A higher value indicates larger or more valuable client
+			// relationships (or a concentrated customer base); a lower value can
+			// indicate a broad base of smaller clients or under-monetized accounts.
+			// (c) BENCHMARK: Varies widely by firm size and service line; useful
+			// mainly as a trend indicator -- a professional services SMB should
+			// watch for this figure declining over time, which can signal customer
+			// mix dilution or pricing pressure.
+			VAR CustomerCount = [Active Customers]
+			RETURN
+			    IF(
+			        CustomerCount = 0,
+			        BLANK(),
+			        DIVIDE([Total Revenue], CustomerCount)
+			    )
+		formatString: $ #,##0
+		displayFolder: Core Financial
+		lineageTag: a8afd609-8591-4da6-9f06-fb7b518f7d63
+
+	/// The number of distinct customers who have at least one invoice flagged as High risk by the machine learning model.
+	measure 'High Risk Customer Count' =
+			// (a) STANDARD DEFINITION: Distinct count of customers who have at least
+			// one invoice flagged risk_tier = "High" by the ML overdue-risk model --
+			// a customer-level (not invoice-level) view of risk concentration.
+			// (b) HIGH/LOW: A higher count means risk is spread across more distinct
+			// customer relationships (broader collections effort needed); a lower
+			// count combined with a high dollar Total Value at Risk means risk is
+			// concentrated in a few large accounts (targeted outreach may be more
+			// effective).
+			// (c) BENCHMARK: No universal benchmark -- best read alongside Active
+			// Customers (i.e. what share of the customer base is high risk). For a
+			// professional services SMB, seeing more than roughly 10-15% of active
+			// customers in the High risk tier would typically prompt a credit
+			// policy review.
+			CALCULATE(
+			    DISTINCTCOUNT('qbo ml_invoice_predictions'[customer_id]),
+			    'qbo ml_invoice_predictions'[risk_tier] = "High"
+			)
+		displayFolder: ML Intelligence
+		lineageTag: 7c782b96-dcd3-4669-b0d8-b818dbdec7ad
+
+	measure 'Collection Rate Insight' = IF([Collection Rate %] >= 0.85, "✓ Healthy — above 85% benchmark", IF([Collection Rate %] >= 0.70, "⚠ Watch — below 85% benchmark", "✗ Critical — below 70%, immediate action needed"))
+		displayFolder: Dynamic Insights
+		lineageTag: 3e380ecd-7d13-41b8-b9e1-c69c03687f86
+
+	measure 'Risk Count Insight' = FORMAT([High Risk Invoice Count], "0") & " invoices at risk — " & FORMAT([Total Value at Risk], "$#,##0") & " exposed"
+		displayFolder: Dynamic Insights
+		lineageTag: 17e93c93-aebe-47f0-a352-cecd6b5d8c8f
+
+	measure 'Risk Value Insight' = IF([Invoice Value at Risk %] >= 0.20, "✗ High exposure — over 20% of AR at risk", IF([Invoice Value at Risk %] >= 0.10, "⚠ Moderate exposure — monitor closely", "✓ Low exposure — under 10% of AR at risk"))
+		displayFolder: Dynamic Insights
+		lineageTag: a4fb2c95-7f4e-437e-a915-3e08faf6340a
+
+	measure 'Model Accuracy Insight' = IF([Model Accuracy %] >= 0.80, "✓ High confidence — predictions are reliable", IF([Model Accuracy %] >= 0.65, "⚠ Moderate confidence — use with judgement", "✗ Low confidence — retrain model with more data"))
+		displayFolder: Dynamic Insights
+		lineageTag: da11a59b-be9c-4ae3-9367-d5aed1235db0
+
+	measure 'Revenue Trend Insight' = IF([Revenue MoM Variance %] > 0.05, "▲ Growing — up " & FORMAT([Revenue MoM Variance %], "0.0%") & " vs last month", IF([Revenue MoM Variance %] < -0.05, "▼ Declining — down " & FORMAT(ABS([Revenue MoM Variance %]), "0.0%") & " vs last month", "→ Stable — revenue flat vs last month"))
+		displayFolder: Dynamic Insights
+		lineageTag: 2d52f0bd-c947-4ae2-931a-ef7959e8a0b6
+
+	measure 'AR Aging Insight' = "Top 8 customers hold " & FORMAT(DIVIDE(SUMX(TOPN(8, VALUES('qbo vw_ar_aging'[customer_name]), CALCULATE(SUM('qbo vw_ar_aging'[balance])), DESC), CALCULATE(SUM('qbo vw_ar_aging'[balance]))), CALCULATE(SUM('qbo vw_ar_aging'[balance]), ALL('qbo vw_ar_aging'))), "0%") & " of total AR"
+		displayFolder: Dynamic Insights
+		lineageTag: d286f610-1b25-4ef9-9544-06262033b29b
+
+	measure 'Portfolio Health Insight' = IF([Overdue Rate %] > 0.20, "✗ " & FORMAT([Overdue Rate %], "0%") & " overdue — above 20% threshold", IF([Overdue Rate %] > 0.10, "⚠ " & FORMAT([Overdue Rate %], "0%") & " overdue — monitor", "✓ " & FORMAT([Overdue Rate %], "0%") & " overdue — portfolio healthy"))
+		displayFolder: Dynamic Insights
+		lineageTag: ba249dfc-794b-4dcc-8de9-893d3607a1d5
+
+	measure 'Collections Insight' = FORMAT([High Risk Invoice Count], "0") & " high-risk invoices totalling " & FORMAT([Total Value at Risk], "$#,##0") & " — sorted by overdue probability"
+		displayFolder: Dynamic Insights
+		lineageTag: 360e1d7b-8b3b-4132-b74a-3f80bb522bd3
+
+	measure 'Gross Margin Insight' = IF([Gross Margin %] >= 0.50, "✓ Strong — above 50% benchmark for professional services", IF([Gross Margin %] >= 0.35, "⚠ Acceptable — above 35% minimum benchmark", "✗ Below benchmark — review cost structure"))
+		displayFolder: Dynamic Insights
+		lineageTag: 2dd5ce54-7a31-4200-b22d-4e45babf960f
+
+	measure 'DSO Insight' = IF([DSO (Days Sales Outstanding)] <= 45, "✓ Healthy — under 45-day benchmark", IF([DSO (Days Sales Outstanding)] <= 60, "⚠ Slow — above 45-day benchmark", "✗ Critical — over 60 days, cash flow at risk"))
+		displayFolder: Dynamic Insights
+		lineageTag: c78f1d2f-c3b9-43dc-b37a-10c8ef84c848
+
+	measure 'Collection Efficiency Insight' = IF([Collection Efficiency %] >= 0.85, "✓ Strong collections process", IF([Collection Efficiency %] >= 0.70, "⚠ Room to improve — target 85%", "✗ Collections process needs attention"))
+		displayFolder: Dynamic Insights
+		lineageTag: c74d10fd-a554-4afc-893b-90a7dd4cca32
+
+	measure 'Forecast Insight' = "Base scenario projects " & FORMAT(CALCULATE(SUM('qbo ml_revenue_forecast'[forecast_revenue]), 'qbo ml_revenue_forecast'[scenario] = "Base"), "$#,##0") & " over 12 months"
+		displayFolder: Dynamic Insights
+		lineageTag: 2ae524ca-e268-4be4-b12f-3a02e842b3e4
+
+	measure 'Scenario Variance Insight' = "Stress vs Upside variance: " & FORMAT(CALCULATE(SUM('qbo ml_revenue_forecast'[forecast_revenue]), 'qbo ml_revenue_forecast'[scenario] = "Upside") - CALCULATE(SUM('qbo ml_revenue_forecast'[forecast_revenue]), 'qbo ml_revenue_forecast'[scenario] = "Stress"), "$#,##0")
+		displayFolder: Dynamic Insights
+		lineageTag: 7f5c966f-1714-4f01-be2b-ab23d5265d8b
+
+	column _Placeholder
+		isHidden
+		lineageTag: ca4ac50e-6808-4110-b0dd-6028689f2cb2
+		isNameInferred
+		sourceColumn: [_Placeholder]
+
+	partition _MeasuresTemp = calculated
+		mode: import
+		source =
+				/*
+				Dedicated measures table.
+				This table intentionally holds no reportable data columns. It exists purely
+				as an organizational container for DAX measures, keeping them separate from
+				physical fact/dimension tables and making them easy to find in the field list.
+				The single underlying column below is a technical artifact required to
+				define a calculated table and is hidden from report view.
+				*/
+				ROW("_Placeholder", BLANK())
+

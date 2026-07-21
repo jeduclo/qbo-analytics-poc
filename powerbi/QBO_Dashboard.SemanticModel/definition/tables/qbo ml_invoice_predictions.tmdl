@@ -1,0 +1,105 @@
+table 'qbo ml_invoice_predictions'
+	lineageTag: dac673be-c423-4107-9f70-f4614e24416e
+
+	/// The unique reference number of the invoice this risk prediction relates to, matching the same invoice in the invoice detail table.
+	column invoice_id
+		dataType: string
+		lineageTag: 46f0e2a4-99f2-4435-b6ec-7d7d7eddaa25
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A unique code identifying the customer who owns the invoice this prediction relates to.
+	column customer_id
+		dataType: string
+		lineageTag: 589780f7-e7e7-4864-9616-b39613f7b2d0
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The machine learning model's estimated likelihood, from 0 to 1, that this invoice will become overdue; a higher number means greater predicted risk.
+	column overdue_probability
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 96e8c9e6-76b1-46b6-818c-40213d6e6598
+		summarizeBy: sum
+		sourceColumn: overdue_probability
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// A simplified risk category, High, Medium, or Low, assigned to the invoice based on its overdue probability score, making the prediction easier to act on.
+	column risk_tier
+		dataType: string
+		lineageTag: 7c1caf33-8f5a-4439-bb53-105bbefd399b
+		summarizeBy: none
+		sourceColumn: risk_tier
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The single factor the machine learning model identified as contributing most to this invoice's overdue risk score.
+	column top_risk_factor
+		dataType: string
+		lineageTag: 80e8f6a0-9d99-4903-9d9a-c2244e8578fe
+		summarizeBy: none
+		sourceColumn: top_risk_factor
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The number of days the model predicts this invoice's payment will be delayed beyond its due date.
+	column estimated_delay_days
+		dataType: int64
+		formatString: 0
+		lineageTag: daad627a-c576-4abb-81a7-5f0f0d577586
+		summarizeBy: sum
+		sourceColumn: estimated_delay_days
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The estimated dollar cost of financing this invoice's outstanding balance for one day, based on the company's current cost of capital.
+	column implicit_cost_at_current_rate
+		dataType: double
+		lineageTag: 5f04fec6-8dbe-4fa7-8fcf-8943115cb3d5
+		summarizeBy: sum
+		sourceColumn: implicit_cost_at_current_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The date and time the machine learning model last calculated this invoice's risk prediction.
+	column scored_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 66edbe79-c98a-4c5b-9f67-b1a080f4dc0d
+		summarizeBy: none
+		sourceColumn: scored_at
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The dollar amount still owed on this invoice as of the time it was last scored by the model.
+	column balance
+		dataType: double
+		formatString: $ #,##0
+		lineageTag: cd9d922e-f78f-428f-9292-a0ef49ed7ac8
+		summarizeBy: sum
+		sourceColumn: balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'qbo ml_invoice_predictions' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "ml_invoice_predictions"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

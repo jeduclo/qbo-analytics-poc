@@ -1,0 +1,124 @@
+table 'qbo vw_invoice_detail'
+	lineageTag: e8c9e506-c411-45df-82be-a3dd7f6cd647
+
+	/// The unique reference number assigned to each customer invoice, used to identify and track a specific bill throughout QuickBooks Online.
+	column invoice_id
+		dataType: string
+		lineageTag: 2c1a4f9b-b428-45e2-918f-9440a41b8e9f
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A unique code identifying the customer who was billed on this invoice, used to link the invoice back to the correct customer account.
+	column customer_id
+		dataType: string
+		lineageTag: 1c909cdc-ea6b-45e6-8f46-74967b73f0a2
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The name of the customer or company that was billed on this invoice, as recorded in QuickBooks Online.
+	column customer_name
+		dataType: string
+		lineageTag: bc2acb73-2b9c-40c5-bf26-955aedae58f9
+		summarizeBy: none
+		sourceColumn: customer_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The country associated with the billed customer, typically based on their billing address on file in QuickBooks Online.
+	column country
+		dataType: string
+		lineageTag: ddf06f25-3fed-42f2-93f6-ab99beb116c6
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The date the invoice was issued to the customer; this date determines which accounting period the billed revenue belongs to.
+	column invoice_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: f37b203b-5e1e-482d-95db-7472e0e32cbf
+		summarizeBy: none
+		sourceColumn: invoice_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The date by which the customer is expected to pay the invoice in full, based on the payment terms agreed with that customer.
+	column due_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e532b4ed-b21e-4ea4-b6f9-4f58198affd9
+		summarizeBy: none
+		sourceColumn: due_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The total dollar value originally billed on the invoice, before any payments or credits have been applied.
+	column amount
+		dataType: double
+		lineageTag: 81727535-7368-4226-bcf5-b538b5f3aee1
+		summarizeBy: sum
+		sourceColumn: amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The dollar amount still owed by the customer on this invoice; a balance of zero means the invoice has been paid in full.
+	column balance
+		dataType: double
+		lineageTag: 4cb4ad71-6d9f-48a6-8ae0-2a0122565ad3
+		summarizeBy: sum
+		sourceColumn: balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The current payment state of the invoice, such as Paid, Open, or Overdue, showing where it stands in the collections process.
+	column status
+		dataType: string
+		lineageTag: 5fed9253-a60e-4bb6-a7ad-d0981b08922f
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The number of days that have passed since the invoice's due date; a value of zero or less means the invoice is not yet overdue.
+	column days_past_due
+		dataType: int64
+		formatString: 0
+		lineageTag: 2f7bc002-59c5-4334-90f7-3b918f05cd38
+		summarizeBy: sum
+		sourceColumn: days_past_due
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A grouping label, such as "0-30 days" or "61-90 days," that categorizes how far past due the invoice's balance is, used for accounts receivable aging analysis.
+	column aging_bucket
+		dataType: string
+		lineageTag: 116c69cd-35b5-4044-a0a9-ebdc70fc46ab
+		summarizeBy: none
+		sourceColumn: aging_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo vw_invoice_detail' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "vw_invoice_detail"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

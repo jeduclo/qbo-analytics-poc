@@ -1,0 +1,98 @@
+table 'qbo vw_pl_structure'
+	lineageTag: ab7a71da-d4d9-4b9f-bd96-5f54cf1e71b0
+
+	/// The unique general ledger account number this row describes, as defined in the company's chart of accounts.
+	column gl_account
+		dataType: string
+		lineageTag: d3fbfe73-3771-44a1-a5c1-66a90e7a8d2e
+		summarizeBy: none
+		sourceColumn: gl_account
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The plain-language name of the general ledger account, such as "Product Revenue" or "Rent & Occupancy."
+	column account_name
+		dataType: string
+		lineageTag: 6262b6bc-9690-4ef6-9f97-b0bc576c2364
+		summarizeBy: none
+		sourceColumn: account_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The financial statement line this account rolls up into on the Profit & Loss report, such as "Revenue" or "Cost of Goods Sold."
+	column fs_line_item
+		dataType: string
+		lineageTag: b0374bc6-991e-49fa-aa62-ac0a228e0b76
+		summarizeBy: none
+		sourceColumn: fs_line_item
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The broader Profit & Loss section this account belongs to, such as "Income" or "COGS" (Cost of Goods Sold).
+	column section
+		dataType: string
+		lineageTag: 217e2f75-b043-48bd-ab9b-25368a55530e
+		summarizeBy: none
+		sourceColumn: section
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A more detailed grouping within the section that further categorizes the account, such as "Payroll" or "Marketing."
+	column subsection
+		dataType: string
+		lineageTag: 1a0a8bcc-f54d-4891-bce5-7d208b3583cf
+		summarizeBy: none
+		sourceColumn: subsection
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The sequence number used to control the order accounts appear in when the Profit & Loss statement is displayed.
+	column display_order
+		dataType: int64
+		formatString: 0
+		lineageTag: 0dc108ff-47ca-434a-a6b6-c94c2337dc30
+		summarizeBy: sum
+		sourceColumn: display_order
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Indicates whether this account normally increases profit (Positive) or reduces it (Negative) on the Profit & Loss statement.
+	column sign
+		dataType: string
+		lineageTag: 2d8edb0b-824a-463d-8653-64b5aadd382f
+		summarizeBy: none
+		sourceColumn: sign
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A yes/no flag marking whether this account is used as the numerator, or top part, of a predefined profitability calculation.
+	column is_kpi_numerator
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 942e8503-930c-4c71-8b66-833e05c3e3a8
+		summarizeBy: none
+		sourceColumn: is_kpi_numerator
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A yes/no flag marking whether this account is used as the denominator, or bottom part, of a predefined profitability calculation.
+	column is_kpi_denominator
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: a5c06169-42b4-45c4-b830-ce353d674215
+		summarizeBy: none
+		sourceColumn: is_kpi_denominator
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo vw_pl_structure' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "vw_pl_structure"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

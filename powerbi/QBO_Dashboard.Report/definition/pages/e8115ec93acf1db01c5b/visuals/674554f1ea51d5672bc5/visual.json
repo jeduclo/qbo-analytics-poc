@@ -1,0 +1,157 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "674554f1ea51d5672bc5",
+  "position": {
+    "x": 0,
+    "y": 186,
+    "z": 3000,
+    "height": 526,
+    "width": 630,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_pl_structure"
+                    }
+                  },
+                  "Property": "section"
+                }
+              },
+              "queryRef": "qbo vw_pl_structure.section",
+              "nativeQueryRef": "Section",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_pl_structure"
+                    }
+                  },
+                  "Property": "subsection"
+                }
+              },
+              "queryRef": "qbo vw_pl_structure.subsection",
+              "nativeQueryRef": "Subsection",
+              "active": false
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_pl_structure"
+                    }
+                  },
+                  "Property": "account_name"
+                }
+              },
+              "queryRef": "qbo vw_pl_structure.account_name",
+              "nativeQueryRef": "Account",
+              "active": false
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "qbo vw_pl_structure"
+                        }
+                      },
+                      "Property": "gl_account"
+                    }
+                  },
+                  "Function": 5
+                }
+              },
+              "queryRef": "CountNonNull(qbo vw_pl_structure.gl_account)",
+              "nativeQueryRef": "# Accounts"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "qbo vw_pl_structure"
+                      }
+                    },
+                    "Property": "gl_account"
+                  }
+                },
+                "Function": 5
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Are we more or less profitable than last year?'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

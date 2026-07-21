@@ -1,0 +1,135 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "83697d9f45b644c36ea0",
+  "position": {
+    "x": 650,
+    "y": 186,
+    "z": 5000,
+    "height": 526,
+    "width": 630,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_bs_structure"
+                    }
+                  },
+                  "Property": "section"
+                }
+              },
+              "queryRef": "qbo vw_bs_structure.section",
+              "nativeQueryRef": "Section",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_bs_structure"
+                    }
+                  },
+                  "Property": "subsection"
+                }
+              },
+              "queryRef": "qbo vw_bs_structure.subsection",
+              "nativeQueryRef": "Subsection",
+              "active": false
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qbo vw_bs_structure"
+                    }
+                  },
+                  "Property": "account_name"
+                }
+              },
+              "queryRef": "qbo vw_bs_structure.account_name",
+              "nativeQueryRef": "Account",
+              "active": false
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "qbo vw_bs_structure"
+                        }
+                      },
+                      "Property": "gl_account"
+                    }
+                  },
+                  "Function": 5
+                }
+              },
+              "queryRef": "CountNonNull(qbo vw_bs_structure.gl_account)",
+              "nativeQueryRef": "# Accounts"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'What does our financial position look like?'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

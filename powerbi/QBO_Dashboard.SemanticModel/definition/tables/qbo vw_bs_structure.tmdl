@@ -1,0 +1,108 @@
+table 'qbo vw_bs_structure'
+	lineageTag: 7e4b30b5-9f6a-4fa6-a157-39e2301ab6b0
+
+	/// The unique general ledger account number this row describes, as defined in the company's chart of accounts.
+	column gl_account
+		dataType: string
+		lineageTag: 1607e256-adb9-465d-90fd-b20f5525d3fb
+		summarizeBy: none
+		sourceColumn: gl_account
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The plain-language name of the general ledger account, such as "Cash & Equivalents" or "Accounts Payable."
+	column account_name
+		dataType: string
+		lineageTag: 04cba7b8-8c36-483c-9d89-950163dec055
+		summarizeBy: none
+		sourceColumn: account_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The financial statement line this account rolls up into on the Balance Sheet, such as "Current Assets" or "Current Liabilities."
+	column fs_line_item
+		dataType: string
+		lineageTag: e5ea0c9a-2ccd-4787-b8c4-2049d5015c56
+		summarizeBy: none
+		sourceColumn: fs_line_item
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The broader Balance Sheet section this account belongs to, such as Assets or Liabilities.
+	column section
+		dataType: string
+		lineageTag: 7c0cd394-052f-43c0-b9b0-2f73e2a583af
+		summarizeBy: none
+		sourceColumn: section
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A more detailed grouping within the section that further categorizes the account, such as "Receivable" or "Payables."
+	column subsection
+		dataType: string
+		lineageTag: 824850d3-c652-4b6a-a604-a28741ffca44
+		summarizeBy: none
+		sourceColumn: subsection
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The sequence number used to control the order accounts appear in when the Balance Sheet is displayed.
+	column display_order
+		dataType: int64
+		formatString: 0
+		lineageTag: 37c91e17-15a4-4695-84a0-b2eee3036816
+		summarizeBy: sum
+		sourceColumn: display_order
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Indicates whether this account normally carries a positive or negative balance on the Balance Sheet.
+	column sign
+		dataType: string
+		lineageTag: ee73fd86-357b-4bd8-8e33-5db40799e4e6
+		summarizeBy: none
+		sourceColumn: sign
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A yes/no flag marking whether this account is included in the company's working capital calculation.
+	column is_working_capital
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 34a723bf-ed71-4edb-8194-bb58858bdb7f
+		summarizeBy: none
+		sourceColumn: is_working_capital
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A yes/no flag marking whether this account is used as the numerator, or top part, of a predefined balance sheet ratio such as the Current Ratio.
+	column is_kpi_numerator
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 25d84231-f314-46e7-b18f-aaae0015bdc9
+		summarizeBy: none
+		sourceColumn: is_kpi_numerator
+
+		annotation SummarizationSetBy = Automatic
+
+	/// A yes/no flag marking whether this account is used as the denominator, or bottom part, of a predefined balance sheet ratio such as the Current Ratio.
+	column is_kpi_denominator
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 3a743bd2-ab50-4a7c-98ba-8be8f01512bc
+		summarizeBy: none
+		sourceColumn: is_kpi_denominator
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo vw_bs_structure' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "vw_bs_structure"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+

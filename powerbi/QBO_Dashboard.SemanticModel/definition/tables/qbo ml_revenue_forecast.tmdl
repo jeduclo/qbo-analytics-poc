@@ -1,0 +1,81 @@
+table 'qbo ml_revenue_forecast'
+	lineageTag: 77fc05d7-5a26-4a36-a556-544b2a317ef7
+
+	/// The future calendar month this revenue prediction applies to.
+	column forecast_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 560425cb-6fe7-44af-87fb-cce96f26f41e
+		summarizeBy: none
+		sourceColumn: forecast_month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	/// The machine learning model's predicted total revenue for the specified month and scenario.
+	column forecast_revenue
+		dataType: double
+		formatString: $ #,##0
+		lineageTag: 59f1bccf-6753-4e55-baa9-5c7402fed6a8
+		summarizeBy: sum
+		sourceColumn: forecast_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The lowest revenue amount the model expects for this month within its confidence range, representing a conservative estimate.
+	column lower_bound
+		dataType: double
+		formatString: $ #,##0
+		lineageTag: ba358511-4679-405a-85e7-9562ec4d3553
+		summarizeBy: sum
+		sourceColumn: lower_bound
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The highest revenue amount the model expects for this month within its confidence range, representing an optimistic estimate.
+	column upper_bound
+		dataType: double
+		formatString: $ #,##0
+		lineageTag: 0f841fc9-678a-4f42-b320-fd19c72e45af
+		summarizeBy: sum
+		sourceColumn: upper_bound
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// The forecasting scenario this prediction belongs to, such as "Base" for the most likely outcome, used to compare different sets of assumptions.
+	column scenario
+		dataType: string
+		lineageTag: e356b71d-f3ec-44e8-9b34-14d8cc71275c
+		summarizeBy: none
+		sourceColumn: scenario
+
+		annotation SummarizationSetBy = Automatic
+
+	/// The date and time this forecast was produced by the machine learning model.
+	column generated_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 4194538c-afca-44af-b0d6-6d9b7270475e
+		summarizeBy: none
+		sourceColumn: generated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'qbo ml_revenue_forecast' = m
+		mode: import
+		source =
+				let
+				  Source = Sql.Database("qbo-poc-server-bengoz-2026.database.windows.net", "qbo_poc_db"),
+				  #"Navigation 1" = Source{[Schema = "qbo", Item = "ml_revenue_forecast"]}[Data]
+				in
+				  #"Navigation 1"
+
+	annotation PBI_ResultType = Table
+
