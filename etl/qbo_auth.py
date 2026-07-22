@@ -60,6 +60,47 @@ def get_access_token() -> str:
 
     token_data   = response.json()
     access_token = token_data.get("access_token")
+    
+    # Auto-save new refresh token to .env and temp file for CI
+    new_refresh_token = token_data.get("refresh_token")
+    if new_refresh_token:
+        try:
+            import re
+            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+            if os.path.exists(env_path):
+                with open(env_path, 'r') as f:
+                    env_content = f.read()
+                env_content = re.sub(
+                    r'QBO_REFRESH_TOKEN=.*',
+                    f'QBO_REFRESH_TOKEN={new_refresh_token}',
+                    env_content
+                )
+                with open(env_path, 'w') as f:
+                    f.write(env_content)
+            else:
+                temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.new_refresh_token')
+                with open(temp_path, 'w') as f:
+                    f.write(new_refresh_token)
+        except Exception:
+            pass
+    
+    # Rotate and persist the new refresh token if QBO issued one
+    new_refresh_token = token_data.get("refresh_token")
+    if new_refresh_token:
+        try:
+            import re
+            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+            with open(env_path, 'r') as f:
+                env_content = f.read()
+            env_content = re.sub(
+                r'QBO_REFRESH_TOKEN=.*',
+                f'QBO_REFRESH_TOKEN={new_refresh_token}',
+                env_content
+            )
+            with open(env_path, 'w') as f:
+                f.write(env_content)
+        except Exception:
+            pass  # Non-fatal — token still works for this run
 
     if not access_token:
         raise ValueError(
