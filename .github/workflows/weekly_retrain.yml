@@ -65,13 +65,11 @@ jobs:
           AZURE_SQL_USERNAME: ${{ secrets.AZURE_SQL_USERNAME }}
           AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
         run: |
-          echo "Waking Azure SQL and loading synthetic data..."
           for i in 1 2 3; do
             python etl/db_connection.py && break || sleep 60
           done
-          echo "Loading synthetic training data..."
+          echo "Loading synthetic data for training..."
           python synthetic_data/generate_qbo_data.py
-          echo "Done."
 
       - name: Run ML Training Pipeline
         env:
