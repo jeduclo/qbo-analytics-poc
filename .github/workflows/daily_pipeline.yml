@@ -89,7 +89,8 @@ jobs:
           AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
         run: |
           if [ ! -f "models/overdue_classifier.pkl" ]; then
-            echo "Model files not found. Running ml_train.py..."
+            echo "Model files not found. Loading synthetic data and training..."
+            python synthetic_data/generate_qbo_data.py
             python etl/ml_train.py
           else
             echo "Model files found. Skipping training."
