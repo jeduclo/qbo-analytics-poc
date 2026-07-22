@@ -1,0 +1,94 @@
+# ============================================================
+# weekly_retrain.yml
+# Retrains all three ML models weekly on Sunday at 04:00 UTC.
+#
+# Why Sunday 04:00 UTC:
+#   - 04:00 UTC is Saturday evening in North American time zones
+#     — low risk of conflicting with manual work
+#   - Runs 1 hour before the daily pipeline (05:00 UTC) so fresh
+#     models are available for Monday's scoring run
+#   - Weekly retraining incorporates the most recently resolved
+#     invoices (whose overdue/paid outcomes are now certain)
+#     and updates model accuracy metrics in Power BI
+#
+# The model .pkl files produced by this workflow are uploaded
+# as GitHub Actions artifacts so the daily pipeline can
+# download them rather than retraining from scratch each day.
+# ============================================================
+
+name: Weekly ML Model Retraining
+
+on:
+  schedule:
+    # Runs at 04:00 UTC every Sunday
+    - cron: '0 4 * * 0'
+
+  # Manual trigger for testing or forced retraining
+  workflow_dispatch:
+
+jobs:
+  retrain-models:
+    name: Retrain ML Models
+    runs-on: ubuntu-latest
+    timeout-minutes: 60    # Model training should complete well within 60 minutes
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install ODBC Driver 18 for SQL Server
+        run: |
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] \
+            https://packages.microsoft.com/ubuntu/22.04/prod jammy main" \
+            | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update -qq
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 2>&1 | tail -5
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip --quiet
+          pip install -r requirements.txt --quiet
+
+      - name: Run ML Training Pipeline
+        env:
+          AZURE_SQL_SERVER:   ${{ secrets.AZURE_SQL_SERVER }}
+          AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+          AZURE_SQL_USERNAME: ${{ secrets.AZURE_SQL_USERNAME }}
+          AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+        run: |
+          echo "Starting ML training at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          python etl/ml_train.py
+          echo "Training completed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      # ── Upload model files as workflow artifacts ───────────────
+      # This makes the .pkl files available to the daily pipeline workflow.
+      # Retention: 7 days (covers the next weekly retraining cycle).
+      - name: Upload trained model files
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models-${{ github.run_id }}
+          path: |
+            models/overdue_classifier.pkl
+            models/overdue_explainer.pkl
+            models/revenue_forecaster_prophet.pkl
+            models/revenue_forecaster_xgb.pkl
+            models/anomaly_detector.pkl
+            models/model_registry.json
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Confirm model files uploaded
+        run: |
+          echo "Model files uploaded as artifact: trained-models-${{ github.run_id }}"
+          echo "These files are available for download by the daily pipeline."
+          ls -lh models/*.pkl
+          cat models/model_registry.json
