@@ -58,6 +58,29 @@ jobs:
           python -m pip install --upgrade pip --quiet
           pip install -r requirements.txt --quiet
 
+      - name: Wake Azure SQL (serverless auto-pause recovery)
+        env:
+          AZURE_SQL_SERVER:   ${{ secrets.AZURE_SQL_SERVER }}
+          AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+          AZURE_SQL_USERNAME: ${{ secrets.AZURE_SQL_USERNAME }}
+          AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+        run: |
+          echo "Waking Azure SQL serverless instance..."
+          for i in 1 2 3; do
+            python -c "
+          from db_connection import get_engine, verify_connection
+          import sys
+          try:
+              engine = get_engine()
+              verify_connection(engine)
+              print('Database awake.')
+              sys.exit(0)
+          except Exception as e:
+              print(f'Attempt failed: {e}')
+              sys.exit(1)
+          " && break || sleep 60
+          done
+
       - name: Run ML Training Pipeline
         env:
           AZURE_SQL_SERVER:   ${{ secrets.AZURE_SQL_SERVER }}
