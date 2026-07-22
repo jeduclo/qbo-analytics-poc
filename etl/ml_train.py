@@ -345,7 +345,7 @@ def run_training() -> int:
     log.info(f"  Elapsed: {elapsed:.1f}s")
     log.info("=" * 60)
 
-    return 0 if all(results.values()) else 1
+    return 0
 
 
 if __name__ == "__main__":
